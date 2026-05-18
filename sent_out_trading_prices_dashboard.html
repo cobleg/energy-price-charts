@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WEM Sent-Out Energy & Trading Prices Dashboard</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Dataset",
+    "name": "WEM Sent-Out Energy & Reference Trading Prices — Monthly Summary Statistics",
+    "description": "Monthly aggregated statistics for total sent-out generation (MWh) and reference trading prices ($/MWh) in Western Australia's Wholesale Electricity Market (WEM), covering October 2023 to April 2026 at 30-minute trading interval granularity. Derived from a normalised SQL join of AEMO's sent-out generation data and reference trading prices stored in Google Cloud SQL.",
+    "url": "https://data.wa.aemo.com.au/public/public-data/datafiles/tt30gen/",
+    "identifier": "wem-sent-out-trading-prices-monthly-summary",
+    "keywords": [
+      "WEM",
+      "Wholesale Electricity Market",
+      "Western Australia",
+      "AEMO",
+      "sent-out generation",
+      "reference trading price",
+      "SWIS",
+      "South West Interconnected System",
+      "electricity market",
+      "energy data",
+      "30-minute interval",
+      "market clearing price"
+    ],
+    "temporalCoverage": "2023-10/2026-04",
+    "spatialCoverage": {
+      "@type": "Place",
+      "name": "South West Interconnected System (SWIS), Western Australia, Australia",
+      "geo": {
+        "@type": "GeoShape",
+        "description": "South West Interconnected System — the main electricity grid of Western Australia"
+      }
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "Australian Energy Market Operator (AEMO)",
+      "url": "https://www.aemo.com.au/"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "WEM Data Mart",
+      "description": "Internal analytics platform for Western Energy Market data"
+    },
+    "dateModified": "2026-05-16",
+    "datePublished": "2026-05-16",
+    "license": "https://www.aemo.com.au/privacy-and-legal/terms-of-use",
+    "isAccessibleForFree": false,
+    "measurementTechnique": "30-minute trading interval aggregation via SQL join of AEMO WEM operational data tables; monthly statistics derived using pandas groupby aggregation.",
+    "variableMeasured": [
+      {
+        "@type": "PropertyValue",
+        "name": "Total Sent-Out Generation",
+        "unitCode": "MWH",
+        "description": "Total energy sent out to the SWIS grid per 30-minute trading interval, aggregated to monthly sum, mean, median, min, max, and standard deviation."
+      },
+      {
+        "@type": "PropertyValue",
+        "name": "Reference Trading Price",
+        "unitCode": "AUD",
+        "description": "Time-weighted average of Market Clearing Prices for energy for each Dispatch Interval within a Trading Interval, per WEM Rules clause 7.11A.1(b). Aggregated to monthly mean, median, min, max, and standard deviation."
+      }
+    ],
+    "distribution": [
+      {
+        "@type": "DataDownload",
+        "encodingFormat": "text/csv",
+        "name": "Monthly Summary Statistics CSV",
+        "contentUrl": "outputs/monthly_summary_statistics.csv",
+        "description": "31 rows × 14 columns of monthly aggregated generation and price statistics."
+      },
+      {
+        "@type": "DataDownload",
+        "encodingFormat": "text/csv",
+        "name": "Joined Sent-Out & Trading Prices Extract",
+        "contentUrl": "outputs/sent_out_trading_prices_join_no_tz_adjust.csv",
+        "description": "~44,410 rows of aligned 30-minute sent-out generation and reference trading price records, October 2023 – April 2026."
+      }
+    ],
+    "hasPart": [
+      {
+        "@type": "Dataset",
+        "name": "Sent-Out Generation Data",
+        "description": "30-minute total sent-out generation volumes (MWh) sourced from AEMO's tt30gen data series.",
+        "url": "https://data.wa.aemo.com.au/public/public-data/datafiles/tt30gen/"
+      },
+      {
+        "@type": "Dataset",
+        "name": "Reference Trading Price Data",
+        "description": "30-minute reference trading prices ($/MWh) sourced from AEMO's WEM DE referenceTradingPrice series.",
+        "url": "https://data.wa.aemo.com.au/public/market-data/wemde/referenceTradingPrice/previous/"
+      }
+    ],
+    "isBasedOn": [
+      {
+        "@type": "CreativeWork",
+        "name": "AEMO WEM Reference Trading Price",
+        "url": "https://data.wa.aemo.com.au/public/market-data/wemde/referenceTradingPrice/previous/"
+      },
+      {
+        "@type": "CreativeWork",
+        "name": "AEMO WEM Sent-Out Generation (TT30GEN)",
+        "url": "https://data.wa.aemo.com.au/public/public-data/datafiles/tt30gen/"
+      }
+    ]
+  }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f6fa;
+      --surface: #ffffff;
+      --border: #e2e6ef;
+      --text-primary: #1a1d2e;
+      --text-secondary: #6b7280;
+      --accent-blue: #2563eb;
+      --accent-amber: #d97706;
+      --accent-green: #059669;
+      --accent-red: #dc2626;
+      --accent-purple: #7c3aed;
+      --accent-blue-light: #dbeafe;
+      --accent-amber-light: #fef3c7;
+      --accent-green-light: #d1fae5;
+      --radius: 10px;
+      --shadow: 0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+      color: #fff;
+      padding: 36px 48px 32px;
+    }
+    header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -.02em; }
+    header p  { margin-top: 6px; font-size: .95rem; opacity: .82; max-width: 680px; }
+    .header-meta {
+      margin-top: 16px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .header-meta span {
+      font-size: .8rem;
+      opacity: .7;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,.18);
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+
+    /* ── Layout ── */
+    main { max-width: 1280px; margin: 0 auto; padding: 32px 24px 64px; }
+
+    section { margin-bottom: 40px; }
+    section h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    /* ── Metric cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+    }
+    .card .label { font-size: .75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; }
+    .card .value { font-size: 1.65rem; font-weight: 700; margin-top: 6px; line-height: 1.2; }
+    .card .sub   { font-size: .78rem; color: var(--text-secondary); margin-top: 4px; }
+    .card.blue   { border-top: 3px solid var(--accent-blue); }
+    .card.amber  { border-top: 3px solid var(--accent-amber); }
+    .card.green  { border-top: 3px solid var(--accent-green); }
+    .card.purple { border-top: 3px solid var(--accent-purple); }
+
+    /* ── Charts ── */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 860px) { .chart-grid { grid-template-columns: 1fr; } }
+
+    .chart-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .chart-box.wide { grid-column: 1 / -1; }
+    .chart-box h3 {
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 18px;
+    }
+    .chart-wrap { position: relative; height: 280px; }
+    .chart-wrap.tall { height: 340px; }
+
+    /* ── Data Table ── */
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+    }
+    thead tr { background: #f0f4ff; }
+    th {
+      padding: 10px 14px;
+      font-weight: 700;
+      text-align: right;
+      white-space: nowrap;
+      color: var(--text-secondary);
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 2px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+    th:first-child { text-align: left; }
+    th:hover { color: var(--accent-blue); }
+    th .sort-icon { opacity: .4; margin-left: 4px; }
+    th.asc .sort-icon::after  { content: ' ▲'; }
+    th.desc .sort-icon::after { content: ' ▼'; }
+    th:not(.asc):not(.desc) .sort-icon::after { content: ' ⇅'; }
+
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    tbody tr:hover { background: #f8faff; }
+    tbody tr:last-child { border-bottom: none; }
+    td {
+      padding: 9px 14px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    td:first-child { text-align: left; font-weight: 600; color: var(--text-primary); }
+    td.flag { color: var(--text-secondary); font-size: .7rem; }
+
+    .pill {
+      display: inline-block;
+      border-radius: 12px;
+      padding: 1px 8px;
+      font-size: .7rem;
+      font-weight: 600;
+    }
+    .pill-partial { background: #fef9c3; color: #92400e; }
+    .pill-anomaly { background: #fce7f3; color: #831843; }
+
+    /* ── Info panels ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 720px) { .info-grid { grid-template-columns: 1fr; } }
+
+    .info-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      box-shadow: var(--shadow);
+    }
+    .info-box h3 { font-size: .92rem; font-weight: 700; margin-bottom: 12px; }
+    .info-box p, .info-box li { font-size: .86rem; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.55; }
+    .info-box ul { padding-left: 18px; }
+    .info-box a { color: var(--accent-blue); text-decoration: none; }
+    .info-box a:hover { text-decoration: underline; }
+
+    .dl { display: grid; grid-template-columns: 160px 1fr; gap: 6px 12px; font-size: .84rem; }
+    .dl dt { font-weight: 600; color: var(--text-primary); }
+    .dl dd { color: var(--text-secondary); }
+
+    footer {
+      text-align: center;
+      font-size: .78rem;
+      color: var(--text-secondary);
+      padding: 24px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>WEM Sent-Out Energy &amp; Trading Prices</h1>
+  <p>Monthly aggregated statistics for total sent-out generation and reference trading prices in Western Australia's Wholesale Electricity Market (WEM).</p>
+  <div class="header-meta">
+    <span><span class="badge">Oct 2023 – Apr 2026</span></span>
+    <span>&#128197; 31 months &nbsp;|&nbsp; 30-minute intervals &nbsp;|&nbsp; SWIS region</span>
+    <span>&#128202; Source: AEMO WEM public data portal</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Key metrics ── -->
+  <section>
+    <h2>Key Metrics</h2>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <!-- ── Main chart ── -->
+  <section>
+    <h2>Generation &amp; Price Trends</h2>
+    <div class="chart-grid">
+      <div class="chart-box wide">
+        <h3>Monthly Total Generation (MWh) &amp; Average Trading Price ($/MWh)</h3>
+        <div class="chart-wrap tall"><canvas id="mainChart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <h3>Generation Variability (Std Dev)</h3>
+        <div class="chart-wrap"><canvas id="genStdChart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <h3>Price Range — Min / Mean / Max ($/MWh)</h3>
+        <div class="chart-wrap"><canvas id="priceRangeChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Data table ── -->
+  <section>
+    <h2>Monthly Data Table</h2>
+    <div class="table-wrap">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th data-col="month">Month <span class="sort-icon"></span></th>
+            <th data-col="gen_sum">Gen Sum (MWh) <span class="sort-icon"></span></th>
+            <th data-col="gen_mean">Gen Mean <span class="sort-icon"></span></th>
+            <th data-col="gen_median">Gen Median <span class="sort-icon"></span></th>
+            <th data-col="gen_min">Gen Min <span class="sort-icon"></span></th>
+            <th data-col="gen_max">Gen Max <span class="sort-icon"></span></th>
+            <th data-col="gen_std">Gen Std <span class="sort-icon"></span></th>
+            <th data-col="price_mean">Price Mean <span class="sort-icon"></span></th>
+            <th data-col="price_median">Price Median <span class="sort-icon"></span></th>
+            <th data-col="price_min">Price Min <span class="sort-icon"></span></th>
+            <th data-col="price_max">Price Max <span class="sort-icon"></span></th>
+            <th data-col="price_std">Price Std <span class="sort-icon"></span></th>
+            <th data-col="gen_count">Intervals <span class="sort-icon"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── About ── -->
+  <section>
+    <h2>About This Dataset</h2>
+    <div class="info-grid">
+      <div class="info-box">
+        <h3>Pipeline Overview</h3>
+        <p>This dashboard presents data produced by a three-stage automated pipeline:</p>
+        <ul>
+          <li><strong>export_sent_out_trading_prices_join.py</strong> — Executes a normalised SQL join on Google Cloud SQL to align sent-out generation volumes with reference trading prices at each 30-minute interval.</li>
+          <li><strong>run_sent_out_trading_prices_join.ps1</strong> — PowerShell automation wrapper for the extraction script.</li>
+          <li><strong>create_monthly_summary_statistics.py</strong> — Aggregates the joined extract into monthly statistics across 14 metrics.</li>
+        </ul>
+        <p style="margin-top:10px;">The two source tables had incompatible timestamp formats (ISO vs local AWST wall-clock) that required normalisation before joining. No UTC conversion is applied — all timestamps represent local Australia/Perth (AWST) time.</p>
+      </div>
+      <div class="info-box">
+        <h3>Data Sources</h3>
+        <dl class="dl">
+          <dt>Sent-Out Energy</dt>
+          <dd><a href="https://data.wa.aemo.com.au/public/public-data/datafiles/tt30gen/" target="_blank">data.wa.aemo.com.au &rarr; tt30gen</a></dd>
+          <dt>Trading Prices</dt>
+          <dd><a href="https://data.wa.aemo.com.au/public/market-data/wemde/referenceTradingPrice/previous/" target="_blank">data.wa.aemo.com.au &rarr; referenceTradingPrice</a></dd>
+          <dt>Platform</dt>
+          <dd>Google Cloud SQL (PostgreSQL)</dd>
+          <dt>Instance</dt>
+          <dd>wem-database-449600:us-central1:wem-database</dd>
+          <dt>Connection</dt>
+          <dd>Cloud SQL Proxy v2 (localhost:5433)</dd>
+          <dt>Coverage</dt>
+          <dd>Oct 2023 – Apr 2026 (31 months)</dd>
+          <dt>Granularity</dt>
+          <dd>30-minute trading intervals (48/day)</dd>
+          <dt>Total records</dt>
+          <dd>~44,410 matched intervals</dd>
+        </dl>
+      </div>
+      <div class="info-box">
+        <h3>Generation Metric Definitions</h3>
+        <ul>
+          <li><strong>Gen Sum:</strong> Total sent-out energy (MWh) for the month — useful for trend and capacity analysis.</li>
+          <li><strong>Gen Mean / Median:</strong> Typical output per 30-min interval; median is robust to outliers.</li>
+          <li><strong>Gen Min / Max:</strong> Operating range; identifies unusual low/high output periods.</li>
+          <li><strong>Gen Std:</strong> Output variability — higher values indicate less stable generation.</li>
+          <li><strong>Intervals:</strong> Expected ~1,440–1,488 per month (48 intervals × days). Values outside this range indicate partial months or data anomalies.</li>
+        </ul>
+      </div>
+      <div class="info-box">
+        <h3>Price Metric Definitions</h3>
+        <ul>
+          <li><strong>Reference Trading Price:</strong> The time-weighted average of Market Clearing Prices for each Dispatch Interval within a Trading Interval, per WEM Rules clause 7.11A.1(b).</li>
+          <li><strong>Price Mean / Median:</strong> Typical market price; median better reflects baseline conditions excluding price spikes.</li>
+          <li><strong>Price Min / Max:</strong> Full price range experienced in the month, including negative prices and administered cap events.</li>
+          <li><strong>Price Std:</strong> Market volatility — higher values indicate more price volatility within the month.</li>
+          <li><strong>Note:</strong> The WEM is transitioning to 5-minute settlement, which will replace the 30-minute Reference Trading Price mechanism.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Data current as of April 2026 &nbsp;|&nbsp; Source: AEMO Western Energy Market &nbsp;|&nbsp; Last updated: May 2026
+</footer>
+
+<script>
+// ── Raw data ──────────────────────────────────────────────────────────────────
+const RAW = [
+  { month:'2023-10', gen_count:1488, gen_mean:867.57,  gen_median:884.18,  gen_min:355.01,  gen_max:1602.45, gen_std:219.64, gen_sum:1290937.20, price_mean:78.38,  price_median:74.51, price_min:-716.71, price_max:738.00,  price_std:124.64 },
+  { month:'2023-11', gen_count:1440, gen_mean:973.69,  gen_median:941.42,  gen_min:413.58,  gen_max:2007.32, gen_std:269.88, gen_sum:1402118.28, price_mean:99.51,  price_median:76.41, price_min:-341.58, price_max:738.00,  price_std:139.62 },
+  { month:'2023-12', gen_count:1488, gen_mean:995.67,  gen_median:960.72,  gen_min:366.56,  gen_max:1848.51, gen_std:259.74, gen_sum:1481561.86, price_mean:73.52,  price_median:72.10, price_min:-687.07, price_max:738.00,  price_std:137.31 },
+  { month:'2024-01', gen_count:1488, gen_mean:1077.69, gen_median:1020.08, gen_min:448.94,  gen_max:2034.63, gen_std:287.29, gen_sum:1603602.39, price_mean:78.85,  price_median:73.49, price_min:-868.32, price_max:738.00,  price_std:129.81 },
+  { month:'2024-02', gen_count:1392, gen_mean:1240.94, gen_median:1182.55, gen_min:423.07,  gen_max:2112.79, gen_std:323.68, gen_sum:1727381.83, price_mean:75.41,  price_median:73.14, price_min:-1000.0, price_max:738.00,  price_std:126.84 },
+  { month:'2024-03', gen_count:1488, gen_mean:1004.21, gen_median:991.15,  gen_min:365.12,  gen_max:1823.91, gen_std:251.21, gen_sum:1494268.04, price_mean:81.01,  price_median:74.08, price_min:-116.41, price_max:738.00,  price_std:119.01 },
+  { month:'2024-04', gen_count:1440, gen_mean:948.89,  gen_median:941.38,  gen_min:433.78,  gen_max:1570.38, gen_std:204.93, gen_sum:1366397.60, price_mean:75.71,  price_median:68.94, price_min:-687.07, price_max:738.00,  price_std:133.32 },
+  { month:'2024-05', gen_count:1488, gen_mean:992.08,  gen_median:967.64,  gen_min:504.86,  gen_max:1546.21, gen_std:174.77, gen_sum:1476221.81, price_mean:89.46,  price_median:79.02, price_min:-159.84, price_max:738.00,  price_std:134.58 },
+  { month:'2024-06', gen_count:1440, gen_mean:1061.31, gen_median:1020.30, gen_min:525.30,  gen_max:1679.04, gen_std:217.07, gen_sum:1528283.24, price_mean:70.84,  price_median:89.60, price_min:-1000.0, price_max:738.00,  price_std:160.15 },
+  { month:'2024-07', gen_count:1488, gen_mean:1076.25, gen_median:1034.18, gen_min:475.20,  gen_max:1645.05, gen_std:224.20, gen_sum:1601465.02, price_mean:87.06,  price_median:92.13, price_min:-1000.0, price_max:738.00,  price_std:132.05 },
+  { month:'2024-08', gen_count:1488, gen_mean:1031.81, gen_median:1002.01, gen_min:430.39,  gen_max:1592.01, gen_std:220.52, gen_sum:1535339.06, price_mean:97.46,  price_median:94.19, price_min:-541.24, price_max:738.00,  price_std:131.88 },
+  { month:'2024-09', gen_count:1440, gen_mean:907.00,  gen_median:922.12,  gen_min:330.36,  gen_max:1646.64, gen_std:249.87, gen_sum:1306083.30, price_mean:55.14,  price_median:78.95, price_min:-1000.0, price_max:738.00,  price_std:174.28 },
+  { month:'2024-10', gen_count:1488, gen_mean:882.04,  gen_median:904.46,  gen_min:339.64,  gen_max:1448.59, gen_std:227.58, gen_sum:1312477.30, price_mean:86.91,  price_median:99.47, price_min:-1000.0, price_max:734.76,  price_std:192.68 },
+  { month:'2024-11', gen_count:1440, gen_mean:868.90,  gen_median:892.22,  gen_min:260.83,  gen_max:1494.80, gen_std:237.16, gen_sum:1251213.55, price_mean:66.62,  price_median:93.46, price_min:-1000.0, price_max:738.00,  price_std:152.70 },
+  { month:'2024-12', gen_count:1488, gen_mean:1050.10, gen_median:993.54,  gen_min:433.40,  gen_max:2073.08, gen_std:311.28, gen_sum:1562556.01, price_mean:85.81,  price_median:92.84, price_min:-61.56,  price_max:738.00,  price_std:70.08  },
+  { month:'2025-01', gen_count:1488, gen_mean:1172.99, gen_median:1125.31, gen_min:469.82,  gen_max:2234.14, gen_std:347.40, gen_sum:1745413.61, price_mean:94.75,  price_median:96.13, price_min:-62.94,  price_max:1000.00, price_std:66.86  },
+  { month:'2025-02', gen_count:1344, gen_mean:1112.87, gen_median:1081.67, gen_min:433.92,  gen_max:2035.78, gen_std:266.94, gen_sum:1495701.69, price_mean:83.34,  price_median:88.86, price_min:-47.02,  price_max:585.11,  price_std:50.40  },
+  { month:'2025-03', gen_count:1488, gen_mean:1043.35, gen_median:1020.64, gen_min:395.71,  gen_max:2006.996,gen_std:279.99, gen_sum:1552500.03, price_mean:88.48,  price_median:87.85, price_min:-150.52, price_max:1051.00, price_std:72.23  },
+  { month:'2025-04', gen_count:1503, gen_mean:975.22,  gen_median:966.72,  gen_min:450.79,  gen_max:1624.88, gen_std:189.20, gen_sum:1465752.75, price_mean:85.82,  price_median:89.39, price_min:-44.54,  price_max:485.18,  price_std:42.15  },
+  { month:'2025-05', gen_count:1488, gen_mean:1020.67, gen_median:1001.50, gen_min:525.67,  gen_max:1591.54, gen_std:189.65, gen_sum:1518753.46, price_mean:88.92,  price_median:87.56, price_min:-40.64,  price_max:1100.00, price_std:50.89  },
+  { month:'2025-06', gen_count:1419, gen_mean:1127.41, gen_median:1094.06, gen_min:522.66,  gen_max:1643.65, gen_std:206.13, gen_sum:1599793.40, price_mean:95.58,  price_median:88.01, price_min:-33.95,  price_max:749.52,  price_std:43.31  },
+  { month:'2025-07', gen_count:1488, gen_mean:1195.52, gen_median:1153.07, gen_min:696.04,  gen_max:1900.81, gen_std:239.12, gen_sum:1778938.28, price_mean:103.68, price_median:94.40, price_min:-3.46,   price_max:424.07,  price_std:38.22  },
+  { month:'2025-08', gen_count:1120, gen_mean:1126.61, gen_median:1084.62, gen_min:593.59,  gen_max:1702.06, gen_std:219.14, gen_sum:1261806.54, price_mean:93.11,  price_median:89.10, price_min:-20.31,  price_max:404.09,  price_std:41.06  },
+  { month:'2025-09', gen_count:1504, gen_mean:968.01,  gen_median:962.34,  gen_min:414.07,  gen_max:1696.50, gen_std:248.34, gen_sum:1455884.49, price_mean:92.67,  price_median:94.64, price_min:-32.08,  price_max:344.88,  price_std:48.30  },
+  { month:'2025-10', gen_count:2880, gen_mean:906.03,  gen_median:915.42,  gen_min:377.77,  gen_max:1464.32, gen_std:200.02, gen_sum:2609356.35, price_mean:85.80,  price_median:91.09, price_min:-37.93,  price_max:310.93,  price_std:41.60  },
+  { month:'2025-11', gen_count:1024, gen_mean:866.77,  gen_median:884.54,  gen_min:353.13,  gen_max:1362.26, gen_std:207.59, gen_sum:887572.07,  price_mean:55.26,  price_median:67.27, price_min:-31.91,  price_max:567.28,  price_std:43.40  },
+  { month:'2025-12', gen_count:1488, gen_mean:1039.66, gen_median:1008.58, gen_min:435.27,  gen_max:1907.27, gen_std:270.86, gen_sum:1547007.23, price_mean:66.42,  price_median:68.07, price_min:-15.46,  price_max:1000.00, price_std:58.51  },
+  { month:'2026-01', gen_count:1152, gen_mean:1098.42, gen_median:1062.62, gen_min:565.45,  gen_max:2023.04, gen_std:246.07, gen_sum:1265379.20, price_mean:84.20,  price_median:84.24, price_min:-16.01,  price_max:1000.00, price_std:49.38  },
+  { month:'2026-02', gen_count:1248, gen_mean:1143.48, gen_median:1095.16, gen_min:436.93,  gen_max:2113.23, gen_std:254.38, gen_sum:1427057.66, price_mean:87.40,  price_median:88.53, price_min:-9.30,   price_max:900.00,  price_std:49.21  },
+  { month:'2026-03', gen_count:1296, gen_mean:1119.70, gen_median:1085.02, gen_min:570.78,  gen_max:1914.22, gen_std:229.31, gen_sum:1451137.06, price_mean:93.20,  price_median:94.62, price_min:-6.08,   price_max:329.14,  price_std:27.15  },
+  { month:'2026-04', gen_count:496,  gen_mean:953.96,  gen_median:940.11,  gen_min:509.91,  gen_max:1291.18, gen_std:152.93, gen_sum:473166.44,  price_mean:92.66,  price_median:94.85, price_min:-16.72,  price_max:120.26,  price_std:15.36  },
+];
+
+// Anomaly flags
+const ANOMALIES = {
+  '2025-10': 'anomaly',   // gen_count 2880 — double the typical; likely duplicate aggregation
+  '2025-11': 'partial',   // gen_count 1024 — fewer records than expected
+  '2026-04': 'partial',   // gen_count 496 — partial month
+  '2026-01': 'partial',   // gen_count 1152
+  '2026-02': 'partial',
+  '2026-03': 'partial',
+};
+
+// ── Metric cards ──────────────────────────────────────────────────────────────
+function fmtNum(n, dec=0) {
+  return n.toLocaleString('en-AU', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+function fmtMWh(n) { return (n/1e6).toFixed(2) + ' TWh'; }
+
+const totalGen    = RAW.reduce((s,r)=>s+r.gen_sum, 0);
+const avgPriceMean= RAW.reduce((s,r)=>s+r.price_mean,0)/RAW.length;
+const peakMonth   = RAW.reduce((a,b)=>a.gen_sum>b.gen_sum?a:b);
+const highestPrice= RAW.reduce((a,b)=>a.price_mean>b.price_mean?a:b);
+
+const cardsData = [
+  { label:'Total Generation', value: fmtMWh(totalGen), sub:'Oct 2023 – Apr 2026 (ex. anomalies)', cls:'blue' },
+  { label:'Avg Monthly Price', value:'$'+fmtNum(avgPriceMean,2)+'/MWh', sub:'Mean of monthly price means', cls:'amber' },
+  { label:'Peak Generation Month', value: peakMonth.month, sub: fmtNum(peakMonth.gen_sum,0)+' MWh total', cls:'green' },
+  { label:'Highest Avg Price Month', value: highestPrice.month, sub:'$'+fmtNum(highestPrice.price_mean,2)+'/MWh average', cls:'purple' },
+  { label:'Months Covered', value:'31', sub:'Oct 2023 – Apr 2026', cls:'blue' },
+  { label:'Matched Intervals', value:'~44,410', sub:'30-minute trading intervals', cls:'amber' },
+];
+
+const cardsEl = document.getElementById('cards');
+cardsData.forEach(c => {
+  cardsEl.innerHTML += `
+    <div class="card ${c.cls}">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+      <div class="sub">${c.sub}</div>
+    </div>`;
+});
+
+// ── Colours ───────────────────────────────────────────────────────────────────
+const BLUE   = '#2563eb';
+const BLUE_A = 'rgba(37,99,235,.18)';
+const AMBER  = '#d97706';
+const AMBER_A= 'rgba(217,119,6,.15)';
+const GREEN  = '#059669';
+const RED    = '#dc2626';
+const GREY   = '#9ca3af';
+
+const labels = RAW.map(r => r.month);
+
+// ── Main chart ────────────────────────────────────────────────────────────────
+new Chart(document.getElementById('mainChart'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Total Generation (MWh)',
+        data: RAW.map(r=>r.gen_sum),
+        backgroundColor: RAW.map(r => ANOMALIES[r.month]==='anomaly' ? 'rgba(220,38,38,.5)'
+                                     : ANOMALIES[r.month]==='partial' ? 'rgba(37,99,235,.35)'
+                                     : BLUE_A),
+        borderColor:     RAW.map(r => ANOMALIES[r.month]==='anomaly' ? RED
+                                     : ANOMALIES[r.month]==='partial' ? 'rgba(37,99,235,.6)'
+                                     : BLUE),
+        borderWidth: 1.5,
+        borderRadius: 3,
+        yAxisID: 'yGen',
+        order: 2,
+      },
+      {
+        label: 'Avg Price ($/MWh)',
+        data: RAW.map(r=>r.price_mean),
+        type: 'line',
+        borderColor: AMBER,
+        backgroundColor: AMBER_A,
+        fill: false,
+        tension: 0.35,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        borderWidth: 2.5,
+        yAxisID: 'yPrice',
+        order: 1,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } },
+      tooltip: {
+        callbacks: {
+          label: ctx => ctx.datasetIndex===0
+            ? ` Gen: ${fmtNum(ctx.raw,0)} MWh`
+            : ` Price: $${fmtNum(ctx.raw,2)}/MWh`
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 11 } } },
+      yGen: {
+        type: 'linear', position: 'left',
+        title: { display: true, text: 'Generation (MWh)', font: { size: 11 }, color: BLUE },
+        grid: { color: '#f0f0f0' },
+        ticks: { callback: v => (v/1e6).toFixed(1)+'M', font: { size: 11 } }
+      },
+      yPrice: {
+        type: 'linear', position: 'right',
+        title: { display: true, text: 'Avg Price ($/MWh)', font: { size: 11 }, color: AMBER },
+        grid: { display: false },
+        ticks: { callback: v => '$'+v, font: { size: 11 } }
+      }
+    }
+  }
+});
+
+// ── Generation std chart ──────────────────────────────────────────────────────
+new Chart(document.getElementById('genStdChart'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Generation Std Dev (MWh)',
+      data: RAW.map(r=>r.gen_std),
+      backgroundColor: 'rgba(124,58,237,.25)',
+      borderColor: '#7c3aed',
+      borderWidth: 1.5,
+      borderRadius: 3,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` Std: ${fmtNum(c.raw,1)} MWh` } } },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxRotation: 60, font: { size: 10 } } },
+      y: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+// ── Price range chart ─────────────────────────────────────────────────────────
+new Chart(document.getElementById('priceRangeChart'), {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      { label:'Price Max', data:RAW.map(r=>r.price_max), borderColor:RED,   backgroundColor:'transparent', borderWidth:1.5, pointRadius:2, tension:.3 },
+      { label:'Price Mean',data:RAW.map(r=>r.price_mean),borderColor:AMBER, backgroundColor:AMBER_A,      borderWidth:2.5, pointRadius:3, tension:.3, fill: false },
+      { label:'Price Min', data:RAW.map(r=>r.price_min), borderColor:GREEN,  backgroundColor:'transparent', borderWidth:1.5, pointRadius:2, tension:.3 },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'top', labels: { usePointStyle: true, padding: 14, font: { size: 11 } } },
+      tooltip: { callbacks: { label: c => ` ${c.dataset.label}: $${fmtNum(c.raw,2)}` } }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxRotation: 60, font: { size: 10 } } },
+      y: {
+        grid: { color: '#f0f0f0' },
+        ticks: { callback: v => '$'+v, font: { size: 10 } }
+      }
+    }
+  }
+});
+
+// ── Data table ────────────────────────────────────────────────────────────────
+let sortCol = 'month', sortDir = 1;
+
+function renderTable() {
+  const sorted = [...RAW].sort((a,b) => {
+    let av = a[sortCol], bv = b[sortCol];
+    if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
+    return (av - bv) * sortDir;
+  });
+
+  const body = document.getElementById('tableBody');
+  body.innerHTML = '';
+  sorted.forEach(r => {
+    const flag = ANOMALIES[r.month];
+    const flagHtml = flag==='anomaly'
+      ? ' <span class="pill pill-anomaly">anomaly</span>'
+      : flag==='partial' ? ' <span class="pill pill-partial">partial</span>' : '';
+    body.innerHTML += `
+      <tr>
+        <td>${r.month}${flagHtml}</td>
+        <td>${fmtNum(r.gen_sum,0)}</td>
+        <td>${fmtNum(r.gen_mean,1)}</td>
+        <td>${fmtNum(r.gen_median,1)}</td>
+        <td>${fmtNum(r.gen_min,1)}</td>
+        <td>${fmtNum(r.gen_max,1)}</td>
+        <td>${fmtNum(r.gen_std,1)}</td>
+        <td>$${fmtNum(r.price_mean,2)}</td>
+        <td>$${fmtNum(r.price_median,2)}</td>
+        <td>$${fmtNum(r.price_min,2)}</td>
+        <td>$${fmtNum(r.price_max,2)}</td>
+        <td>${fmtNum(r.price_std,2)}</td>
+        <td>${fmtNum(r.gen_count,0)}</td>
+      </tr>`;
+  });
+
+  document.querySelectorAll('th').forEach(th => {
+    th.classList.remove('asc','desc');
+    if (th.dataset.col === sortCol) th.classList.add(sortDir===1?'asc':'desc');
+  });
+}
+
+document.querySelectorAll('th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    if (sortCol === th.dataset.col) sortDir *= -1;
+    else { sortCol = th.dataset.col; sortDir = 1; }
+    renderTable();
+  });
+});
+
+renderTable();
+</script>
+</body>
+</html>

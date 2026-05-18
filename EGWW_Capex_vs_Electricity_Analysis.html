@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EGWW Capex vs Electricity Prices — Analysis</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Dataset",
+  "name": "EGWW Capital Expenditure vs Electricity Prices — Correlation Analysis",
+  "description": "Statistical analysis and interactive visualisation examining the relationship between Electricity, Gas, Water and Waste Services (EGWW) sector capital expenditure and Australian electricity consumer prices. Presents time-series charts, scatter plots and correlation statistics for both index levels and year-on-year percentage changes. Key finding: the strong levels correlation (r = 0.90) is a co-trend artefact — both series rose secularly over four decades — while year-on-year changes show no statistically significant relationship (r = -0.12, p = 0.156). Quarterly data, 1987Q3 to 2025Q4.",
+  "keywords": ["EGWW", "capital expenditure", "electricity prices", "CPI", "ABS 5625.0", "ABS 6401.0", "ANZSIC", "correlation analysis", "infrastructure investment", "Australia"],
+  "temporalCoverage": "1987/2025",
+  "spatialCoverage": {
+    "@type": "AdministrativeArea",
+    "name": "Australia"
+  },
+  "variableMeasured": [
+    {
+      "@type": "PropertyValue",
+      "name": "EGWW total capital expenditure",
+      "description": "Private-sector Electricity, Gas, Water and Waste Services capital expenditure, chain volume measures, trend series"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "EGWW equipment capital expenditure",
+      "description": "Equipment subset of EGWW capital expenditure, chain volume measures, trend series"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "Electricity CPI index — Australia",
+      "description": "Weighted average electricity Consumer Price Index for eight Australian capital cities"
+    }
+  ],
+  "isBasedOn": [
+    {
+      "@type": "Dataset",
+      "name": "ABS 5625.0 Table 8 — Private New Capital Expenditure, EGWW sector (Trend, Chain Volume Measures)",
+      "description": "Quarterly trend chain volume measures for the Electricity, Gas, Water and Waste Services ANZSIC division. Excludes public-sector business units. Covers 1987Q3 to 2025Q4.",
+      "temporalCoverage": "1987-07/2025-12",
+      "measurementTechnique": "Capital expenditure survey, trend series, chain volume measures, quarterly",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Australian Bureau of Statistics",
+        "url": "https://www.abs.gov.au"
+      }
+    },
+    {
+      "@type": "Dataset",
+      "name": "ABS 6401.0 Table 18 — Electricity CPI, Australia (weighted average of eight capital cities)",
+      "description": "Consumer Price Index for electricity, weighted average of eight capital cities, Original series, quarterly.",
+      "measurementTechnique": "Consumer Price Index, Original (not seasonally adjusted), quarterly",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Australian Bureau of Statistics",
+        "url": "https://www.abs.gov.au"
+      }
+    }
+  ],
+  "about": [
+    {"@type": "Thing", "name": "Electricity, Gas, Water and Waste Services sector"},
+    {"@type": "Thing", "name": "Capital expenditure"},
+    {"@type": "Thing", "name": "Electricity retail prices"},
+    {"@type": "Thing", "name": "Infrastructure investment"},
+    {"@type": "Thing", "name": "Correlation analysis"}
+  ]
+}
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f7f8fa; color: #1a1f2e; margin: 0; padding: 24px; line-height: 1.5;
+  }
+  .container { max-width: 1280px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 4px 0; font-weight: 600; letter-spacing: -0.01em; }
+  h2 { font-size: 16px; margin: 28px 0 10px 0; font-weight: 600; letter-spacing: -0.01em;
+       padding-bottom: 6px; border-bottom: 2px solid #1f3a93; }
+  h3 { font-size: 13px; margin: 14px 0 6px 0; color: #5b6478;
+       text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+  .subtitle { color: #5b6478; font-size: 13px; margin: 0 0 16px 0; }
+  .card {
+    background: white; border: 1px solid #e3e6ec; border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 16px;
+  }
+  .chart-wrap { height: 380px; position: relative; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 12.5px;
+    background: white; border-radius: 6px; overflow: hidden;
+  }
+  th { background: #1f3a93; color: white; padding: 8px 10px; text-align: left; font-weight: 600; }
+  td { padding: 7px 10px; border-bottom: 1px solid #eef0f4; }
+  tr:nth-child(even) td { background: #fafbfc; }
+  td.num { font-family: 'SF Mono', Monaco, 'Consolas', monospace; text-align: right; }
+  td.sig { font-weight: 700; }
+  .sig-strong { color: #1f7a3a; }
+  .sig-weak { color: #b06020; }
+  .sig-none { color: #5b6478; }
+  p { margin: 8px 0; font-size: 13.5px; }
+  ul { margin: 6px 0 6px 22px; font-size: 13.5px; }
+  li { margin: 4px 0; }
+  .key { font-weight: 600; color: #1f3a93; }
+  .summary-box {
+    background: #eef3ff; border-left: 4px solid #1f3a93; padding: 14px 18px;
+    border-radius: 6px; margin: 12px 0; font-size: 13.5px;
+  }
+  .summary-box .label { font-weight: 700; color: #1f3a93; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block; }
+  .pill {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    margin-left: 6px;
+  }
+  .pill.strong { background: #1f7a3a; color: white; }
+  .pill.moderate { background: #b06020; color: white; }
+  .pill.weak { background: #8a93a5; color: white; }
+  @media (max-width: 900px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>EGWW capital expenditure vs electricity prices</h1>
+  <p class="subtitle">Quarterly, 1987Q3 – 2025Q4. Sources: ABS 5625.0 Table 8 (Trend, Chain Volume Measures, EGWW sector) and ABS 6401.0 Table 18 (Electricity, weighted average of eight capital cities).</p>
+
+  <h2>Key takeaways</h2>
+  <div class="summary-box">
+    <span class="label">Headline finding</span>
+    <p>In <strong>levels</strong>, EGWW capex and the electricity CPI move strongly together (Pearson r = +0.90, R² = 0.81). In <strong>year-on-year percentage changes</strong>, that relationship vanishes (r = -0.12, not statistically significant). The levels relationship is almost entirely a <em>co-trend artefact</em> — both series rose secularly through four decades — rather than evidence of a tight cyclical link between investment and prices.</p>
+    <p style="margin-top:10px;">Lag analysis is consistent with this: in levels every lag from -8 to +8 quarters shows ~r = 0.90 (i.e. no informative lead/lag structure beyond shared trend). In YoY changes, the strongest correlation appears at lag +8 (electricity leading by 8 quarters) at r = -0.29 — suggesting price surges weakly precede capex slowdowns, but with high noise.</p>
+  </div>
+
+  <h2>1 · Series over time</h2>
+  <div class="card">
+    <div class="chart-wrap"><canvas id="time-chart"></canvas></div>
+  </div>
+
+  <h2>2 · Summary statistics</h2>
+  <div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Pairing</th><th class="num">n</th><th class="num">Pearson r</th><th class="num">p-value</th>
+        <th class="num">Spearman ρ</th><th class="num">OLS R²</th><th class="num">OLS slope</th>
+        <th>Strength</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <tr>
+        <td>Capex (levels) ↔ Electricity index (levels)</td>
+        <td class="num">154</td>
+        <td class="num">+0.898</td>
+        <td class="num"><0.001</td>
+        <td class="num">+0.954</td>
+        <td class="num">0.806</td>
+        <td class="num">+0.0223</td>
+        <td><span class="pill strong">Strong</span></td>
+      </tr>
+      <tr>
+        <td>Equipment (levels) ↔ Electricity index (levels)</td>
+        <td class="num">154</td>
+        <td class="num">+0.810</td>
+        <td class="num"><0.001</td>
+        <td class="num">+0.868</td>
+        <td class="num">0.656</td>
+        <td class="num">+0.1022</td>
+        <td><span class="pill strong">Strong</span></td>
+      </tr>
+      <tr>
+        <td>Capex (YoY %) ↔ Electricity (YoY %)</td>
+        <td class="num">150</td>
+        <td class="num">-0.116</td>
+        <td class="num">0.156</td>
+        <td class="num">-0.118</td>
+        <td class="num">0.014</td>
+        <td class="num">-0.0200</td>
+        <td><span class="pill none">Not significant</span></td>
+      </tr>
+      <tr>
+        <td>Equipment (YoY %) ↔ Electricity (YoY %)</td>
+        <td class="num">150</td>
+        <td class="num">-0.063</td>
+        <td class="num">0.447</td>
+        <td class="num">+0.084</td>
+        <td class="num">0.004</td>
+        <td class="num">-0.0010</td>
+        <td><span class="pill none">Not significant</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="margin-top:10px;font-size:12px;color:#5b6478;">
+    <strong>Reading the table:</strong> the levels rows show very high correlation. This is misleading on its own — both series share a strong upward trend, so any two trended series will appear correlated. The percentage-change rows strip out the trend; both fall below conventional significance thresholds (p > 0.05). This is the more reliable cyclical signal.
+  </p>
+  </div>
+
+  <h2>3 · Scatter plots — levels</h2>
+  <div class="row">
+    <div class="card">
+      <h3>Total EGWW capex vs electricity index</h3>
+      <div class="chart-wrap"><canvas id="scatter-cap-lvl"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>EGWW equipment capex vs electricity index</h3>
+      <div class="chart-wrap"><canvas id="scatter-eq-lvl"></canvas></div>
+    </div>
+  </div>
+
+  <h2>4 · Scatter plots — year-on-year percentage change</h2>
+  <div class="row">
+    <div class="card">
+      <h3>Capex YoY % vs electricity YoY %</h3>
+      <div class="chart-wrap"><canvas id="scatter-cap-pct"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Equipment YoY % vs electricity YoY %</h3>
+      <div class="chart-wrap"><canvas id="scatter-eq-pct"></canvas></div>
+    </div>
+  </div>
+
+  <h2>5 · Lag-correlation analysis</h2>
+  <div class="card">
+    <p>Tests capex<sub>t</sub> against electricity<sub>t–k</sub>. Positive k means electricity prices <strong>lead</strong> capex by k quarters; negative k means capex leads.</p>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">Lag (quarters)</th>
+          <th class="num">Capex YoY% r</th>
+          <th class="num">Equipment YoY% r</th>
+          <th class="num">Capex level r</th>
+          <th class="num">Equipment level r</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="num">-8 (capex leads 8Q)</td>
+          <td class="num">-0.105</td>
+          <td class="num">-0.058</td>
+          <td class="num">+0.891</td>
+          <td class="num">+0.850</td>
+        </tr>
+        <tr>
+          <td class="num">-4 (capex leads 4Q)</td>
+          <td class="num">-0.014</td>
+          <td class="num">-0.049</td>
+          <td class="num">+0.895</td>
+          <td class="num">+0.836</td>
+        </tr>
+        <tr>
+          <td class="num">-2 (capex leads 2Q)</td>
+          <td class="num">-0.083</td>
+          <td class="num">-0.060</td>
+          <td class="num">+0.897</td>
+          <td class="num">+0.823</td>
+        </tr>
+        <tr>
+          <td class="num">-1 (capex leads 1Q)</td>
+          <td class="num">-0.106</td>
+          <td class="num">-0.067</td>
+          <td class="num">+0.898</td>
+          <td class="num">+0.816</td>
+        </tr>
+        <tr>
+          <td class="num">+0 (contemporaneous)</td>
+          <td class="num">-0.116</td>
+          <td class="num">-0.063</td>
+          <td class="num">+0.898</td>
+          <td class="num">+0.810</td>
+        </tr>
+        <tr>
+          <td class="num">+1 (price leads 1Q)</td>
+          <td class="num">-0.095</td>
+          <td class="num">-0.062</td>
+          <td class="num">+0.899</td>
+          <td class="num">+0.800</td>
+        </tr>
+        <tr>
+          <td class="num">+2 (price leads 2Q)</td>
+          <td class="num">-0.050</td>
+          <td class="num">-0.065</td>
+          <td class="num">+0.897</td>
+          <td class="num">+0.789</td>
+        </tr>
+        <tr>
+          <td class="num">+4 (price leads 4Q)</td>
+          <td class="num">+0.022</td>
+          <td class="num">-0.081</td>
+          <td class="num">+0.896</td>
+          <td class="num">+0.762</td>
+        </tr>
+        <tr>
+          <td class="num">+8 (price leads 8Q)</td>
+          <td class="num">-0.288</td>
+          <td class="num">-0.068</td>
+          <td class="num">+0.894</td>
+          <td class="num">+0.707</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top:10px;font-size:12px;color:#5b6478;">
+      Note the <em>levels</em> correlations stay around +0.80 to +0.90 at every lag — this is the signature of two shared-trend series, not evidence of a directional relationship. The YoY% lag profile is the more diagnostic view: weakly negative at most lags, mildly stronger at lag +8 (r = –0.29).
+    </p>
+  </div>
+
+  <h2>6 · Interpretation</h2>
+  <div class="card">
+    <h3>Why the levels and YoY% results disagree</h3>
+    <p>Both EGWW capex and the electricity index display strong unit-root behaviour with clear breaks: capex steps up after privatisation and the start of large network-augmentation programs in the late 1990s and again during the 2010s renewables build; the electricity index steps up after wholesale-market crises in the late 2000s (drought/GFC), 2017 (gas-driven East Coast crunch), and 2022 (Russian invasion). The level-on-level correlation captures the fact that both series have risen — but it gives no information about cyclical co-movement.</p>
+    <p>Differencing the series (here as 4-quarter percentage changes) removes the trend and exposes the cyclical relationship. That relationship is weak and indistinguishable from zero, with a slight negative tilt that does not reach statistical significance.</p>
+
+    <h3>What this implies about the underlying mechanism</h3>
+    <ul>
+      <li><span class="key">Capex is not strongly responsive to short-term price signals.</span> Quarterly fluctuations in retail electricity prices do not predict quarterly fluctuations in EGWW investment. This is consistent with regulated-asset-base investment cycles — Western Power, Powerlink, AusNet etc. invest according to multi-year regulatory determinations, not retail price signals.</li>
+      <li><span class="key">Causality, where it exists, likely runs from capex to prices, not the reverse.</span> Under the AER post-tax revenue model (and its WA equivalent), network capex feeds directly into the regulated asset base, which is recovered from retail customers over the asset life. This is the standard explanation for the "gold plating" period (2008–2014) that produced the most visible run-up in the price series. The lag +8 negative correlation in YoY% is consistent with prices rising in response to past investment, then dampening subsequent capex through demand response or political pressure for tariff relief.</li>
+      <li><span class="key">Sector capex is dominated by network infrastructure, not generation.</span> EGWW in chain-volume terms grew ~50× from 1987 to 2025; total equipment capex grew at a much slower pace. The capex run-up is therefore primarily about poles-and-wires and supporting infrastructure rather than generation plant — which fits the narrative of declining coal generation, intermittent renewable build, and accelerating transmission spend for the energy transition.</li>
+      <li><span class="key">The high contemporaneous level correlation is not evidence of price-driven investment.</span> A common false reading of these numbers would be "high prices drove high investment" or vice versa. The data does not support that. What the data does support is a long-run accumulation story: progressive investment in the sector through structural reform, demand growth, and now decarbonisation, with electricity prices in retail-CPI terms rising over the same period for largely overlapping reasons (cost-of-service regulation, market-design changes, fuel shocks).</li>
+    </ul>
+
+    <h3>Caveats</h3>
+    <ul>
+      <li>The capex series is the <em>trend</em> chain-volume measure, which smooths short-run noise but also dampens cyclical co-movement.</li>
+      <li>EGWW includes Gas, Water and Waste Services alongside Electricity. The Electricity-only component is not separately published in this table.</li>
+      <li>The CPI electricity series reflects retail prices to households, not wholesale prices or commercial/industrial tariffs. The wholesale price linkage to capex decisions would be tighter.</li>
+      <li>The post-2022 retail-price values are distorted by Commonwealth and state bill-relief rebates which the ABS treats as price reductions, materially affecting recent observations.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+var DATA = {"quarters": ["1987-09-01", "1987-12-01", "1988-03-01", "1988-06-01", "1988-09-01", "1988-12-01", "1989-03-01", "1989-06-01", "1989-09-01", "1989-12-01", "1990-03-01", "1990-06-01", "1990-09-01", "1990-12-01", "1991-03-01", "1991-06-01", "1991-09-01", "1991-12-01", "1992-03-01", "1992-06-01", "1992-09-01", "1992-12-01", "1993-03-01", "1993-06-01", "1993-09-01", "1993-12-01", "1994-03-01", "1994-06-01", "1994-09-01", "1994-12-01", "1995-03-01", "1995-06-01", "1995-09-01", "1995-12-01", "1996-03-01", "1996-06-01", "1996-09-01", "1996-12-01", "1997-03-01", "1997-06-01", "1997-09-01", "1997-12-01", "1998-03-01", "1998-06-01", "1998-09-01", "1998-12-01", "1999-03-01", "1999-06-01", "1999-09-01", "1999-12-01", "2000-03-01", "2000-06-01", "2000-09-01", "2000-12-01", "2001-03-01", "2001-06-01", "2001-09-01", "2001-12-01", "2002-03-01", "2002-06-01", "2002-09-01", "2002-12-01", "2003-03-01", "2003-06-01", "2003-09-01", "2003-12-01", "2004-03-01", "2004-06-01", "2004-09-01", "2004-12-01", "2005-03-01", "2005-06-01", "2005-09-01", "2005-12-01", "2006-03-01", "2006-06-01", "2006-09-01", "2006-12-01", "2007-03-01", "2007-06-01", "2007-09-01", "2007-12-01", "2008-03-01", "2008-06-01", "2008-09-01", "2008-12-01", "2009-03-01", "2009-06-01", "2009-09-01", "2009-12-01", "2010-03-01", "2010-06-01", "2010-09-01", "2010-12-01", "2011-03-01", "2011-06-01", "2011-09-01", "2011-12-01", "2012-03-01", "2012-06-01", "2012-09-01", "2012-12-01", "2013-03-01", "2013-06-01", "2013-09-01", "2013-12-01", "2014-03-01", "2014-06-01", "2014-09-01", "2014-12-01", "2015-03-01", "2015-06-01", "2015-09-01", "2015-12-01", "2016-03-01", "2016-06-01", "2016-09-01", "2016-12-01", "2017-03-01", "2017-06-01", "2017-09-01", "2017-12-01", "2018-03-01", "2018-06-01", "2018-09-01", "2018-12-01", "2019-03-01", "2019-06-01", "2019-09-01", "2019-12-01", "2020-03-01", "2020-06-01", "2020-09-01", "2020-12-01", "2021-03-01", "2021-06-01", "2021-09-01", "2021-12-01", "2022-03-01", "2022-06-01", "2022-09-01", "2022-12-01", "2023-03-01", "2023-06-01", "2023-09-01", "2023-12-01", "2024-03-01", "2024-06-01", "2024-09-01", "2024-12-01", "2025-03-01", "2025-06-01", "2025-09-01", "2025-12-01"], "egww_capex": [43, 40, 37, 34, 32, 31, 29, 27, 25, 29, 36, 38, 32, 24, 20, 19, 17, 16, 18, 21, 29, 32, 30, 26, 24, 23, 27, 36, 49, 54, 53, 59, 74, 101, 134, 153, 152, 140, 127, 126, 128, 128, 126, 125, 128, 164, 220, 256, 252, 221, 196, 199, 209, 206, 200, 222, 295, 401, 472, 465, 398, 321, 291, 306, 358, 444, 524, 554, 562, 558, 559, 566, 566, 559, 581, 633, 717, 802, 866, 914, 1013, 1051, 1002, 1008, 1168, 1479, 1710, 1707, 1612, 1567, 1661, 1794, 1805, 1683, 1470, 1257, 1137, 1107, 1136, 1128, 1094, 1059, 1069, 1105, 1155, 1208, 1237, 1219, 1182, 1106, 1056, 1092, 1143, 1166, 1135, 1096, 1142, 1218, 1338, 1532, 1810, 2169, 2463, 2591, 2635, 2649, 2680, 2716, 2728, 2664, 2519, 2359, 2253, 2286, 2422, 2511, 2529, 2477, 2493, 2618, 2749, 2843, 2876, 2884, 2932, 3023, 3165, 3339, 3513, 3640, 3643, 3644, 3717, 3835], "egww_equip": [2, 2, 3, 3, 3, 3, 3, 5, 8, 9, 7, 4, 2, 2, 3, 3, 4, 4, 4, 3, 2, 2, 3, 3, 3, 3, 4, 5, 1, 1, 1, 14, 13, 12, 51, 58, 65, 71, 73, 76, 86, 96, 95, 85, 90, 108, 144, 179, 181, 158, 149, 156, 180, 190, 194, 224, 266, 291, 285, 250, 229, 234, 242, 259, 267, 261, 234, 210, 208, 215, 219, 214, 205, 206, 219, 243, 268, 272, 255, 228, 217, 276, 352, 389, 377, 343, 329, 337, 330, 337, 331, 336, 391, 470, 533, 574, 600, 646, 708, 751, 765, 748, 727, 721, 711, 679, 637, 601, 576, 552, 531, 521, 540, 567, 565, 521, 464, 436, 440, 452, 453, 436, 424, 418, 404, 381, 357, 345, 352, 359, 362, 362, 369, 384, 390, 383, 369, 359, 359, 357, 369, 396, 428, 446, 438, 428, 440, 461, 475, 467, 450, 449, 468, 494], "electricity": [21.9, 22.07, 22.14, 22.17, 23.16, 23.23, 23.28, 23.28, 23.98, 24.12, 24.14, 24.14, 23.28, 25.3, 25.37, 25.4, 26.41, 26.53, 26.55, 26.58, 27.13, 27.64, 27.88, 27.9, 28.22, 28.24, 28.26, 28.29, 28.26, 28.26, 28.26, 28.26, 28.34, 28.34, 28.34, 28.34, 28.7, 28.7, 28.75, 28.75, 28.94, 28.94, 28.94, 28.94, 27.8, 27.95, 28.28, 27.99, 27.93, 28.26, 28.49, 28.17, 31.25, 31.4, 31.58, 31.3, 32.23, 32.5, 33.0, 32.7, 33.08, 33.36, 35.1, 34.58, 35.06, 35.07, 35.53, 35.05, 35.84, 36.04, 36.62, 36.14, 36.76, 37.02, 37.57, 37.12, 37.94, 38.13, 38.85, 38.41, 40.04, 40.32, 42.74, 42.17, 44.11, 44.42, 46.01, 45.77, 51.0, 51.39, 54.41, 54.06, 57.33, 57.84, 60.78, 59.86, 64.51, 64.87, 66.79, 66.23, 76.45, 76.35, 78.21, 77.68, 81.1, 81.17, 82.29, 81.64, 77.51, 77.51, 79.03, 78.58, 77.45, 77.45, 77.32, 76.99, 81.16, 81.15, 83.19, 83.06, 90.44, 91.25, 92.9, 91.69, 92.13, 92.86, 92.36, 90.81, 90.17, 89.63, 90.79, 88.56, 87.97, 81.35, 80.62, 83.3, 83.45, 83.78, 83.45, 83.45, 86.1, 93.55, 96.4, 94.62, 98.57, 99.98, 98.26, 100.32, 83.01, 74.76, 87.02, 94.07, 102.54, 93.88], "egww_capex_yoy": [null, null, null, null, -25.581395348837212, -22.499999999999996, -21.62162162162162, -20.588235294117652, -21.875, -6.451612903225811, 24.13793103448276, 40.74074074074075, 28.000000000000004, -17.24137931034483, -44.44444444444444, -50.0, -46.875, -33.333333333333336, -9.999999999999998, 10.526315789473696, 70.58823529411764, 100.0, 66.66666666666667, 23.809523809523814, -17.24137931034483, -28.125, -9.999999999999998, 38.46153846153846, 104.16666666666666, 134.7826086956522, 96.2962962962963, 63.888888888888886, 51.020408163265294, 87.03703703703705, 152.83018867924528, 159.3220338983051, 105.40540540540539, 38.6138613861386, -5.223880597014929, -17.647058823529417, -15.789473684210531, -8.571428571428575, -0.7874015748031482, -0.7936507936507908, 0.0, 28.125, 74.60317460317461, 104.80000000000001, 96.875, 34.75609756097562, -10.909090909090914, -22.265625, -17.06349206349206, -6.7873303167420795, 2.0408163265306145, 11.557788944723612, 41.148325358851665, 94.66019417475728, 136.0, 109.45945945945948, 34.91525423728814, -19.950124688279303, -38.347457627118644, -34.193548387096776, -10.050251256281406, 38.31775700934579, 80.06872852233677, 81.04575163398692, 56.98324022346368, 25.67567567567568, 6.679389312977091, 2.166064981949467, 0.7117437722419906, 0.17921146953405742, 3.9355992844364973, 11.837455830388688, 26.67844522968197, 43.47048300536673, 49.05335628227194, 44.391785150079, 41.28312412831241, 31.047381546134666, 15.704387990762125, 10.284463894967178, 15.30108588351431, 40.72312083729781, 70.65868263473054, 69.34523809523809, 38.01369863013699, 5.949966193373912, -2.8654970760233933, 5.096660808435849, 11.972704714640203, 7.402680280791318, -11.499096929560505, -29.93311036789298, -37.00831024930748, -34.224598930481285, -22.72108843537415, -10.262529832935563, -3.781882145998239, -4.336043360433606, -5.897887323943662, -2.039007092198586, 5.575868372943327, 14.069877242681784, 15.715622076707202, 10.316742081447972, 2.3376623376623273, -8.443708609271528, -14.632174616006466, -10.418375717801476, -3.2994923857868064, 5.4249547920433905, 7.481060606060597, 0.366300366300365, -0.08748906386701893, 4.459691252144071, 17.88546255506609, 39.781021897810206, 58.493870402802095, 78.07881773399015, 84.08071748878925, 69.1253263707572, 45.580110497237555, 22.130013831258655, 8.810393828664221, 4.8243921265920475, 3.529411764705892, 0.5662514156285381, -6.007462686567166, -13.144329896907214, -17.412023460410552, -14.18918918918919, -3.85073441842001, 6.4434082238236545, 12.250332889480697, 8.355205599300097, 2.931461601981833, 4.261250497809632, 8.699090549624366, 14.775938635446106, 15.363016446048938, 10.160427807486627, 6.6569661695161875, 6.331340133661634, 10.048678720445059, 15.776699029126217, 19.815825375170526, 20.41018855441614, 15.102685624012647, 9.134471398622335, 5.807002561912888, 5.35714285714286], "egww_equip_yoy": [null, null, null, null, 50.0, 50.0, 0.0, 66.66666666666667, 166.66666666666666, 200.0, 133.33333333333334, -19.999999999999996, -75.0, -77.77777777777779, -57.14285714285714, -25.0, 100.0, 100.0, 33.33333333333333, 0.0, -50.0, -50.0, -25.0, 0.0, 50.0, 50.0, 33.33333333333333, 66.66666666666667, -66.66666666666667, -66.66666666666667, -75.0, 179.99999999999997, 1200.0, 1100.0, 5000.0, 314.28571428571433, 400.0, 491.6666666666667, 43.13725490196079, 31.034482758620683, 32.30769230769231, 35.2112676056338, 30.136986301369873, 11.842105263157897, 4.651162790697683, 12.5, 51.578947368421055, 110.58823529411765, 101.11111111111111, 46.296296296296305, 3.472222222222232, -12.849162011173188, -0.5524861878453025, 20.253164556962023, 30.201342281879185, 43.58974358974359, 47.777777777777786, 53.15789473684212, 46.90721649484537, 11.607142857142861, -13.909774436090228, -19.58762886597938, -15.087719298245617, 3.600000000000003, 16.59388646288209, 11.538461538461542, -3.3057851239669422, -18.918918918918916, -22.097378277153556, -17.624521072796938, -6.41025641025641, 1.904761904761898, -1.4423076923076872, -4.1860465116279055, 0.0, 13.551401869158886, 30.731707317073177, 32.038834951456316, 16.43835616438356, -6.172839506172845, -19.02985074626866, 1.4705882352941124, 38.03921568627451, 70.6140350877193, 73.73271889400921, 24.27536231884058, -6.5340909090909065, -13.367609254498714, -12.466843501326263, -1.7492711370262426, 0.6079027355623046, -0.29673590504450953, 18.48484848484848, 39.465875370919875, 61.027190332326285, 70.83333333333333, 53.452685421994886, 37.446808510638306, 32.83302063789868, 30.836236933797913, 27.499999999999993, 15.789473684210531, 2.68361581920904, -3.9946737683089206, -7.058823529411762, -9.224598930481287, -12.37964236588721, -16.64355062413315, -18.9873417721519, -18.7039764359352, -16.64050235478807, -13.311148086522461, -6.25, 2.717391304347827, 6.4030131826742, 0.0, -14.074074074074073, -23.104056437389776, -22.123893805309734, -13.24376199616123, -2.370689655172409, 0.0, -3.6363636363636376, -7.52212389380531, -10.816777041942604, -12.614678899082566, -15.801886792452835, -17.46411483253588, -12.871287128712872, -5.774278215223094, 1.4005602240896309, 4.9275362318840665, 4.829545454545459, 6.9637883008356605, 7.734806629834257, 5.8011049723756924, 0.0, -6.5104166666666625, -7.948717948717954, -6.7885117493472595, 0.0, 10.30640668523677, 19.220055710306404, 24.92997198879552, 18.699186991869922, 8.080808080808088, 2.8037383177569986, 3.363228699551568, 8.447488584474883, 9.11214953271029, 2.2727272727272707, -2.6030368763557465, -1.473684210526316, 5.781584582441113], "electricity_yoy": [null, null, null, null, 5.753424657534256, 5.256003624830097, 5.1490514905149, 5.006765899864685, 3.540587219343694, 3.831252690486453, 3.6941580756013614, 3.6941580756013614, -2.9190992493744794, 4.892205638474301, 5.095277547638766, 5.21955260977629, 13.44501718213058, 4.8616600790513775, 4.651162790697683, 4.645669291338583, 2.726240060583107, 4.183942706370147, 5.009416195856864, 4.966139954853266, 4.0176925912274175, 2.170767004341534, 1.3629842180774787, 1.3978494623655857, 0.14174344436570507, 0.07082152974504652, 0.0, -0.10604453870625141, 0.2830856334040899, 0.2830856334040899, 0.2830856334040899, 0.2830856334040899, 1.270289343683828, 1.270289343683828, 1.4467184191954807, 1.4467184191954807, 0.836236933797907, 0.836236933797907, 0.6608695652174035, 0.6608695652174035, -3.9391845196959263, -3.420870767104356, -2.2805805114029076, -3.2826537664132793, 0.4676258992805771, 1.1091234347048395, 0.7425742574257432, 0.643086816720273, 11.88686000716077, 11.111111111111093, 10.845910845910844, 11.111111111111116, 3.1359999999999832, 3.5031847133758065, 4.496516782773918, 4.472843450479247, 2.6372944461681813, 2.6461538461538536, 6.363636363636371, 5.749235474006098, 5.98548972188635, 5.125899280575541, 1.2250712250712281, 1.3591671486408385, 2.224757558471202, 2.7658967778728227, 3.06783000281452, 3.1098430813124134, 2.5669642857142794, 2.71920088790234, 2.594210813762987, 2.7116768123962354, 3.2100108813928108, 2.998379254457051, 3.406973649188183, 3.47521551724137, 5.535055350553519, 5.7435090479937, 10.012870012870012, 9.789117417339256, 10.164835164835173, 10.16865079365079, 7.650912494150663, 8.53687455537111, 15.62004080707322, 15.691130121566864, 18.256900673766573, 18.112300633602786, 12.411764705882344, 12.551079976649149, 11.70740672670465, 10.728819829818704, 12.523983952555383, 12.154218533886585, 9.88812109246464, 10.641496825927167, 18.50875833204153, 17.69693232619083, 17.098368019164532, 17.288237958629015, 6.082406801831253, 6.3130320890635305, 5.216724204066003, 5.09783728115345, -4.4266337854500515, -4.509055069606993, -3.961599222262735, -3.748162665360122, -0.07740936653335417, -0.07740936653335417, -2.1637352903960627, -2.023415627386105, 4.790187217559705, 4.77727566171724, 7.591826176927063, 7.8841407975061895, 11.434204041399699, 12.446087492298208, 11.672075970669571, 10.390079460630863, 1.868642193719583, 1.7643835616438341, -0.5812701829924771, -0.9597556985494582, -2.1274286334527215, -3.4783545121688575, -1.6998700736249428, -2.4777006937561907, -2.4398358655872254, -9.23797835546134, -11.201674193193078, -5.939476061427285, -5.138115266568144, 2.9870928088506554, 3.5102952121061737, 0.18007202881153983, 3.1755542240862633, 11.661494390069226, 15.518274415817856, 13.385260635110852, 14.483159117305465, 6.873329770176384, 1.9294605809128562, 6.024096385542155, -15.78573602515977, -25.2250450090018, -11.439039283533493, -6.230063795853269, 23.52728586917239, 25.57517388978061]};
+var LABELS = ["Q3 1987", "Q4 1987", "Q1 1988", "Q2 1988", "Q3 1988", "Q4 1988", "Q1 1989", "Q2 1989", "Q3 1989", "Q4 1989", "Q1 1990", "Q2 1990", "Q3 1990", "Q4 1990", "Q1 1991", "Q2 1991", "Q3 1991", "Q4 1991", "Q1 1992", "Q2 1992", "Q3 1992", "Q4 1992", "Q1 1993", "Q2 1993", "Q3 1993", "Q4 1993", "Q1 1994", "Q2 1994", "Q3 1994", "Q4 1994", "Q1 1995", "Q2 1995", "Q3 1995", "Q4 1995", "Q1 1996", "Q2 1996", "Q3 1996", "Q4 1996", "Q1 1997", "Q2 1997", "Q3 1997", "Q4 1997", "Q1 1998", "Q2 1998", "Q3 1998", "Q4 1998", "Q1 1999", "Q2 1999", "Q3 1999", "Q4 1999", "Q1 2000", "Q2 2000", "Q3 2000", "Q4 2000", "Q1 2001", "Q2 2001", "Q3 2001", "Q4 2001", "Q1 2002", "Q2 2002", "Q3 2002", "Q4 2002", "Q1 2003", "Q2 2003", "Q3 2003", "Q4 2003", "Q1 2004", "Q2 2004", "Q3 2004", "Q4 2004", "Q1 2005", "Q2 2005", "Q3 2005", "Q4 2005", "Q1 2006", "Q2 2006", "Q3 2006", "Q4 2006", "Q1 2007", "Q2 2007", "Q3 2007", "Q4 2007", "Q1 2008", "Q2 2008", "Q3 2008", "Q4 2008", "Q1 2009", "Q2 2009", "Q3 2009", "Q4 2009", "Q1 2010", "Q2 2010", "Q3 2010", "Q4 2010", "Q1 2011", "Q2 2011", "Q3 2011", "Q4 2011", "Q1 2012", "Q2 2012", "Q3 2012", "Q4 2012", "Q1 2013", "Q2 2013", "Q3 2013", "Q4 2013", "Q1 2014", "Q2 2014", "Q3 2014", "Q4 2014", "Q1 2015", "Q2 2015", "Q3 2015", "Q4 2015", "Q1 2016", "Q2 2016", "Q3 2016", "Q4 2016", "Q1 2017", "Q2 2017", "Q3 2017", "Q4 2017", "Q1 2018", "Q2 2018", "Q3 2018", "Q4 2018", "Q1 2019", "Q2 2019", "Q3 2019", "Q4 2019", "Q1 2020", "Q2 2020", "Q3 2020", "Q4 2020", "Q1 2021", "Q2 2021", "Q3 2021", "Q4 2021", "Q1 2022", "Q2 2022", "Q3 2022", "Q4 2022", "Q1 2023", "Q2 2023", "Q3 2023", "Q4 2023", "Q1 2024", "Q2 2024", "Q3 2024", "Q4 2024", "Q1 2025", "Q2 2025", "Q3 2025", "Q4 2025"];
+var STATS = {"level_capex_elec": {"label": "Capex (levels) \u2194 Electricity index (levels)", "n": 154, "pearson_r": 0.8980403680553938, "pearson_p": 4.4472902700382e-56, "spearman_r": 0.9535720513694425, "spearman_p": 4.0639484419518286e-81, "beta": 0.022343858496670147, "alpha": 28.629083979106277, "r_squared": 0.8064765026570669, "reg_p": 4.44729027003823e-56, "std_err": 0.0008877841173484439}, "level_equip_elec": {"label": "Equipment (levels) \u2194 Electricity index (levels)", "n": 154, "pearson_r": 0.8097375526454762, "pearson_p": 5.1299179347141735e-37, "spearman_r": 0.8683367856528953, "spearman_p": 3.8070752861981685e-48, "beta": 0.10219611222480045, "alpha": 23.98074919231299, "r_squared": 0.655674904164285, "reg_p": 5.129917934714653e-37, "std_err": 0.006006930931157019}, "pct_capex_elec": {"label": "Capex (YoY %) \u2194 Electricity (YoY %)", "n": 150, "pearson_r": -0.11635167475814834, "pearson_p": 0.15621679023032906, "spearman_r": -0.11782934436060569, "spearman_p": 0.15098979058798073, "beta": -0.019959116377286305, "alpha": 4.563627967459631, "r_squared": 0.01353771221902594, "reg_p": 0.1562167902303291, "std_err": 0.014004836962530874}, "pct_equip_elec": {"label": "Equipment (YoY %) \u2194 Electricity (YoY %)", "n": 150, "pearson_r": -0.06253250045561821, "pearson_p": 0.44713433570989347, "spearman_r": 0.08411737588615407, "spearman_p": 0.30610928258280096, "beta": -0.0010142359949607278, "alpha": 4.253617428113031, "r_squared": 0.003910313613231897, "reg_p": 0.4471343357098939, "std_err": 0.0013306124680433208}};
+
+// === 1. Time-series chart with dual y-axis ===
+new Chart(document.getElementById('time-chart').getContext('2d'), {
+  type: 'line',
+  data: {
+    labels: LABELS,
+    datasets: [
+      { label: 'EGWW Capex ($m, chain vol trend)', data: DATA.egww_capex,
+        borderColor: '#1f3a93', backgroundColor: '#1f3a93', borderWidth: 2,
+        pointRadius: 0, pointHoverRadius: 4, tension: 0.15, yAxisID: 'y1' },
+      { label: 'EGWW Equipment ($m, chain vol trend)', data: DATA.egww_equip,
+        borderColor: '#7a96d3', backgroundColor: '#7a96d3', borderWidth: 2,
+        pointRadius: 0, pointHoverRadius: 4, tension: 0.15, yAxisID: 'y1', borderDash: [4,4] },
+      { label: 'Electricity CPI index (Sep 2025 = 100)', data: DATA.electricity,
+        borderColor: '#c25a1f', backgroundColor: '#c25a1f', borderWidth: 2,
+        pointRadius: 0, pointHoverRadius: 4, tension: 0.15, yAxisID: 'y2' }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { position: 'bottom', labels: { font: { size: 11.5 } } } },
+    scales: {
+      x: { ticks: { font: { size: 10.5 }, color: '#5b6478', maxRotation: 0, autoSkip: true, maxTicksLimit: 16 } },
+      y1: { type: 'linear', position: 'left',
+        title: { display: true, text: 'Capex ($m, chain volume)', color: '#1f3a93', font: { size: 11 } },
+        ticks: { font: { size: 10.5 }, color: '#1f3a93' } },
+      y2: { type: 'linear', position: 'right',
+        title: { display: true, text: 'Electricity CPI index', color: '#c25a1f', font: { size: 11 } },
+        ticks: { font: { size: 10.5 }, color: '#c25a1f' }, grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+// === Scatter plot helper ===
+function scatter(canvasId, xData, yData, xLabel, yLabel, color, statKey) {
+  var pts = [];
+  for (var i = 0; i < xData.length; i++) {
+    if (xData[i] != null && yData[i] != null) {
+      pts.push({ x: xData[i], y: yData[i], label: LABELS[i] });
+    }
+  }
+  var s = STATS[statKey];
+  // Compute regression line endpoints
+  var xs = pts.map(function(p){return p.x;});
+  var xmin = Math.min.apply(null, xs);
+  var xmax = Math.max.apply(null, xs);
+  var line = [
+    { x: xmin, y: s.alpha + s.beta * xmin },
+    { x: xmax, y: s.alpha + s.beta * xmax }
+  ];
+  new Chart(document.getElementById(canvasId).getContext('2d'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { type: 'line', label: 'OLS fit', data: line,
+          borderColor: '#1a1f2e', borderWidth: 1.5, pointRadius: 0, showLine: true, borderDash: [4,4] },
+        { type: 'scatter', label: 'Observations', data: pts,
+          backgroundColor: color, borderColor: color, pointRadius: 3, pointHoverRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(item) {
+              var p = item.raw;
+              if (p.label) return p.label + ': (' + p.x.toFixed(1) + ', ' + p.y.toFixed(1) + ')';
+              return '';
+            }
+          }
+        },
+        title: {
+          display: true,
+          text: 'r = ' + s.pearson_r.toFixed(3) + ' · R² = ' + s.r_squared.toFixed(3) + ' · n = ' + s.n,
+          color: '#5b6478', font: { size: 11.5, weight: 'normal' }, padding: { bottom: 4 }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: xLabel, color: '#5b6478', font: { size: 11.5 } },
+             ticks: { font: { size: 10.5 }, color: '#5b6478' } },
+        y: { title: { display: true, text: yLabel, color: '#5b6478', font: { size: 11.5 } },
+             ticks: { font: { size: 10.5 }, color: '#5b6478' } }
+      }
+    }
+  });
+}
+
+scatter('scatter-cap-lvl', DATA.egww_capex, DATA.electricity,
+  'EGWW capex ($m, chain volume trend)', 'Electricity CPI index',
+  '#1f3a93', 'level_capex_elec');
+
+scatter('scatter-eq-lvl', DATA.egww_equip, DATA.electricity,
+  'EGWW equipment ($m, chain volume trend)', 'Electricity CPI index',
+  '#7a96d3', 'level_equip_elec');
+
+scatter('scatter-cap-pct', DATA.egww_capex_yoy, DATA.electricity_yoy,
+  'EGWW capex (YoY %)', 'Electricity (YoY %)',
+  '#1f3a93', 'pct_capex_elec');
+
+scatter('scatter-eq-pct', DATA.egww_equip_yoy, DATA.electricity_yoy,
+  'EGWW equipment (YoY %)', 'Electricity (YoY %)',
+  '#7a96d3', 'pct_equip_elec');
+</script>
+</body>
+</html>

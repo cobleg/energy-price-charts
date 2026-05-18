@@ -1,0 +1,18 @@
+
+
+| Government Policy / Reform | Date Introduced | Impact on the Wholesale Electricity Market (WEM) and WA Energy Sector |
+| :---- | :---- | :---- |
+| National Competition Policy (NCP) / Hilmer Reforms | 1995 | Mandated the structural reform of public monopolies by introducing competitive neutrality and third-party access regimes for essential infrastructure 1, 2\. This catalysed the 1995 breakup of the State Energy Commission of WA (SECWA) into AlintaGas and Western Power 3\. |
+| Electricity Industry Act 2004 | 2004 | Provided the foundational legal architecture to restructure the WA electricity industry. It established the rules for the WEM, an independent licensing regime, and customer protection measures 4, 5\. |
+| Electricity Networks Access Code | 2004 | Created a regulatory framework and commercial arrangements for third-party access to Western Power's transmission and distribution networks in the South West Interconnected System (SWIS) 6-8. |
+| Retail Contestability Extension | January 2005 | Extended retail contestability to electricity customers consuming more than 50 megawatt hours (MWh) per year 6, 9\. |
+| Electricity Corporations Act 2005 & Disaggregation | 2005 (Implemented April 2006\) | Mandated the disaggregation of the vertically integrated Western Power Corporation into four separate state-owned entities: Verve Energy (generation), Western Power (networks), Synergy (retail), and Horizon Power (regional supply) 5, 6, 10\. |
+| Establishment of the Wholesale Electricity Market (WEM) | September 2006 | Launched a bespoke competitive wholesale market for the SWIS, initially featuring bilateral contracts, a day-ahead Short Term Energy Market (STEM), and a Reserve Capacity Mechanism (RCM) to incentivise investment for peak demand 6, 11, 12\. |
+| Western Australian Domestic Gas Reservation Policy | 2006 | Required LNG exporters to reserve 15% of their production for the WA domestic market. This successfully insulated the WEM and its gas-fired generators from the severe international commodity price shocks experienced on the East Coast 13-16. |
+| Verve Energy Generation Cap | Post-2006 | A Ministerial Direction placed a 3,000 MW cap on Verve Energy's ability to invest in new generation capacity, which was intended to help independent generators increase their market share and foster competition 10, 17\. |
+| Energy Transformation Strategy (ETS) | 2019 | Launched by the State Government to modernize the SWIS for a future dominated by large-scale renewables and Distributed Energy Resources (DER) 18, 19\. |
+| Whole of System Plan | 2020 (First plan) | A core initiative of the ETS that introduced a structured, coordinated approach to modelling and planning the most appropriate generation mix and network investments over a 20-year horizon 20-22. |
+| Distributed Energy Resources (DER) Roadmap | Under the ETS | Designed to guide the integration of rooftop solar PV, battery storage, and energy management systems into the power system to manage system security and efficiency 23, 24\. |
+| Just Transition Plan & Coal Retirement | Under the ETS | Committed the state to a planned, orderly transition away from aging coal-fired generation in the Collie region, supporting affected workers and communities while making room for lower-emission technologies 25, 26\. |
+| "The ""New WEM"" & Security-Constrained Economic Dispatch (SCED)" | October 2023 | Radically overhauled market rules to introduce SCED and transitioned the grid from an unconstrained access model to a ""constrained access"" model. This requires generators to share network capacity and bid for dispatch, optimizing existing poles and wires for a renewable-heavy grid 19, 24, 27\. |
+

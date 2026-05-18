@@ -1,0 +1,141 @@
+Financial Year Ending,Utility Name,Project Name,Project Expenditure,Notes
+2021,Synergy,Total Asset Investment Program,$57.7 million,
+2021,Synergy,Generation Asset Maintenance,$27.8 million,"Includes $800,000 for compliance works at the retired Kwinana Power Station."
+2021,Synergy,Retail Systems & Metering,$12.7 million,Includes $4 million for Advanced Metering Infrastructure and $8.7 million for legacy retail systems.
+2021,Synergy,Wholesale Electricity Market (WEM) Reforms,$7.9 million,Readiness for WEM reforms implemented by October 2022.
+2021,Synergy,Corporate ICT Infrastructure,$4.3 million,Replacement and upgrade of HR and finance systems.
+2021,Synergy,Community Energy Exchange (VPP for Schools),$3.5 million,WA Recovery Plan pilot project for virtual power plants.
+2021,Synergy,Renewable Energy for Social Housing,"$700,000",WA Recovery Plan initiative for vulnerable customers.
+2021,Western Power,Total Asset Investment Program,$892.2 million,
+2021,Western Power,Service Capital Projects,$345 million,"Essential investments for reliability, regulatory compliance, and business support."
+2021,Western Power,Safety Programs,$242 million,Includes $202 million to replace high-risk overhead conductors and wooden poles.
+2021,Western Power,State Underground Power Program,$56.4 million,Replacement of overhead network assets with underground power.
+2021,Western Power,Security (System Management),N/A,Funded from a broader $28.5 million allocation across 2020-21 and 2021-22.
+2021,Western Power,Service Connection Condition Monitoring,N/A,Funded from a broader $34 million allocation across 2020-21 and 2021-22.
+2021,Western Power,East Perth Power Station Redevelopment,N/A,Funded from a broader $16.1 million allocation across 2020-21 to 2022-23.
+2021,Horizon Power,Total Asset Investment Program,$183.2 million,
+2021,Horizon Power,Asset Management Plan,$70.8 million,Mitigates extreme and high risks associated with energy assets.
+2021,Horizon Power,Energy Storage in Regional Towns,$30.8 million,Battery energy storage systems across nine regional towns.
+2021,Horizon Power,Standalone Power Systems (SPS),$9.9 million,"WA Recovery Plan spending across the Kimberley, Mid West, and Goldfields-Esperance."
+2021,Horizon Power,Derby Renewable Solutions,$4.8 million,Renewable energy solutions for the Shire of Derby.
+2021,Horizon Power,Denham Hydrogen Project,$4.7 million,Demonstration plant to test hydrogen displacement of diesel.
+2021,Horizon Power,Broome Customer Experience Centre,$1.2 million,Relocation of customer call centre from Melbourne to Broome.
+2021,Horizon Power,Mid West Pipeline,$1 million,Connection to a new LNG production plant in Mount Magnet.
+2021,Horizon Power,Hardship Response Infrastructure Upgrades,"$740,000",Prepayment metering platform and Horizon Power App enhancements.
+2021,Horizon Power,Ngaanyatjarra Lands,"$725,000",Feasibility studies for regularising electricity to 13 Aboriginal communities.
+2022,Synergy,Total Asset Investment Program,$194.6 million,
+2022,Synergy,Big Battery,$114 million,100 MW big battery for renewable integration and system security.
+2022,Synergy,Generation Asset Maintenance,$41 million,"Maintenance of coal, gas, liquid fuel, and renewable assets."
+2022,Synergy,Customer Engagement Platform,$12 million,Replacement of legacy customer systems.
+2022,Synergy,Corporate ICT Infrastructure,$11 million,Finance and HR system replacements and device upgrades.
+2022,Synergy,Thermal Generation Fleet Upgrades,$8 million,Enables more frequent start-ups and operation at lower voltages.
+2022,Synergy,Electric Vehicle (EV) Charging Stations,$4.5 million,Installation across the South West Interconnected System.
+2022,Synergy,Wholesale Electricity Market (WEM) Reforms,$2 million,Infrastructure upgrades for market readiness.
+2022,Synergy,Smart Energy for Social Housing,$1.5 million,Installation of solar panels for vulnerable customers.
+2022,Synergy,Virtual Power Plants (VPP) for Schools,"$520,000",Continuation of pilot project.
+2022,Western Power,Total Asset Investment Program,$834.2 million,
+2022,Western Power,Service Capital Projects,$328.9 million,"System reliability, asset replacement, metering, and business support."
+2022,Western Power,Safety Programs,$273.8 million,"Includes replacing 441 high-risk conductors and 27,756 power poles."
+2022,Western Power,Growth (Customer Driven Works),$148.7 million,Connecting customers and supporting the State's economy.
+2022,Western Power,Growth (Network Augmentation),$48.1 million,"Network capacity expansion, including Kemerton transformer and East Perth Power Station."
+2022,Horizon Power,Total Asset Investment Program,$151.9 million,
+2022,Horizon Power,Asset Management Plan,$44.9 million,Includes $19.9M for asset replacement and $6.3M for safety.
+2022,Horizon Power,Denham Hydrogen Demonstration Plant,N/A,Commencing in 2021-22; part of a $9.3 million total project cost.
+2022,Horizon Power,Energy Storage in Regional Towns,N/A,Funded from a broader $30.8 million allocation across 2020-21 to 2022-23.
+2022,Horizon Power,Kununurra Cotton Gin Electricity Infrastructure,N/A,Funded from the broader Asset Investment Program.
+2022,Horizon Power,Mid West Pipeline,"$300,000",Unincorporated joint venture to supply gold mining customers.
+2023,Synergy,Total Asset Investment Program,$143.4 million,
+2023,Synergy,Big Battery (Kwinana Power Station),$51 million,Finalising the 100 MW/200 MWh utility-scale battery.
+2023,Synergy,Generation Asset Maintenance,$49.1 million,Includes $6 million for flexible operations at the Muja Power Station.
+2023,Synergy,Customer Engagement Platform,$13 million,Implementation of a new retail platform.
+2023,Synergy,Corporate ICT Infrastructure,$10 million,System and device upgrades.
+2023,Synergy,Electric Vehicle (EV) Charging Highway,$4.5 million,"Fast-charging network spanning Perth, Kununurra, Eucla, and Kalgoorlie."
+2023,Synergy,Virtual Power Plants (VPP) for Schools,$4.3 million,Battery storage and solar for seven additional regional schools.
+2023,Synergy,Wholesale Electricity Market (WEM) Reforms,$2 million,Upgrades for market readiness.
+2023,Synergy,Smart Energy for Social Housing,$1.6 million,COVID-19 Response initiative.
+2023,Synergy,Emergency Solar Management,"$470,000",ICT platform to remotely turn off solar systems during emergencies.
+2023,Western Power,Total Asset Investment Program,$1.011 billion,
+2023,Western Power,Service Capital Projects,$359.2 million,"Includes $121.5 million for business support, cybersecurity, and ICT."
+2023,Western Power,Safety Programs,$320.6 million,Includes $216.5M for pole/conductor replacement and $50.8M for undergrounding.
+2023,Western Power,Growth (Customer Driven Works),$178.5 million,Distribution and transmission infrastructure expansion.
+2023,Western Power,Growth (Network Augmentation),$37.8 million,Includes $4.8 million for the East Perth Power Station redevelopment.
+2023,Western Power,Security (System Management),$21.6 million,"Addresses network constraints (thermal, voltage, and fault level management)."
+2023,Horizon Power,Total Asset Investment Program,$100.1 million,
+2023,Horizon Power,Asset Management Plan,$38.4 million,Includes $19.4M for asset replacement and $5.9M for knowledge/technology.
+2023,Horizon Power,Denham Hydrogen Demonstration Plant,N/A,Completing in 2022-23; part of a $9.3 million total project cost.
+2023,Horizon Power,Standalone Power Systems (SPS),N/A,Funded from a broader $13.5 million allocation across 2020-21 to 2022-23.
+2023,Horizon Power,Energy Storage in Regional Towns,N/A,Funded from a broader $30.8 million allocation across 2020-21 to 2022-23.
+2023,Horizon Power,Derby Port,N/A,High voltage distribution rebuild funded from the broader AIP.
+2024,Synergy,Total Asset Investment Program,$57.3 million,
+2024,Synergy,Generation Asset Maintenance,$46.7 million,Capacity and reliability maintenance of existing thermal and renewable assets.
+2024,Synergy,Decarbonisation and Renewable Projects,N/A,Funded via equity contributions from a broader $2.7 billion provision.
+2024,Synergy,Virtual Power Plants (VPP),N/A,Second stage rollout for schools; not explicitly itemised for the single year.
+2024,Western Power,Total Asset Investment Program,$1.106 billion,
+2024,Western Power,Service Capital Projects,$410.4 million,Includes $154.3M for ICT/cybersecurity and $98.7M for asset replacements.
+2024,Western Power,Safety Programs,$274.4 million,"Includes $194.5 million to replace 14,697 wood power poles and high-risk conductors."
+2024,Western Power,Growth (Customer Driven Works),$141.5 million,Connecting customers and supporting the economy.
+2024,Western Power,Decarbonisation Augmentations,$122 million,Supports the decarbonisation of the SWIS and new renewable connections.
+2024,Western Power,Asset Relocation and Upgrades,$52.2 million,Relocation of metropolitan transmission and distribution assets.
+2024,Western Power,Growth (Network Augmentation),$42.7 million,Addresses future loading obligations and load growth.
+2024,Horizon Power,Total Asset Investment Program,$105.5 million,
+2024,Horizon Power,Asset Management Plan,$44.1 million,Risk mitigation and regulatory compliance.
+2024,Horizon Power,Remote Communities Transfer,$53.8 million,Total investment value to improve services for 141 remote Aboriginal communities.
+2024,Horizon Power,Standalone Power Systems (SPS) Roll-out,$13.3 million,Installation of 50 SPS units in the Esperance Region.
+2024,Horizon Power,Customer-funded Temporary Solar Connection,$7.6 million,33kV network solution for the Burrup Peninsula.
+2024,Horizon Power,Property - New Builds,$3.8 million,Construction of six new residential houses for regional staff.
+2024,Horizon Power,Electric Vehicle (EV) Charging Infrastructure,$2.4 million,Equity contribution for EV network stretching to Kununurra and Esperance.
+2024,Horizon Power,Outage and Life Support Management System,N/A,Funded from a broader $8.8 million allocation across 2023-24 and 2024-25.
+2024,Horizon Power,Energy Storage in Regional Towns,N/A,Funded from a broader $30.8 million allocation.
+2025,Synergy,Total Asset Investment Program,$1.228 billion,
+2025,Synergy,Kwinana Battery Energy Storage System 2,$583.3 million,200 MW/800 MWh utility-scale transmission-connected battery.
+2025,Synergy,Collie Battery Energy Storage System 1,$549.7 million,"500 MW/2,000 MWh battery energy storage system."
+2025,Synergy,Business Systems Replacement,$72.5 million,Corporate IT infrastructure replacement.
+2025,Synergy,Generation Asset Maintenance,$63 million,Maintenance of thermal and renewable fleet capacity.
+2025,Synergy,"Property, Plant and Equipment",$9.8 million,Ongoing corporate works.
+2025,Synergy,Decarbonisation - Other Minor Investment,$1.5 million,Minor program investments.
+2025,Western Power,Total Asset Investment Program,$1.373 billion,
+2025,Western Power,Service Capital Projects,$455.2 million,Includes $125.8M for ICT upgrades and $38.2M for corporate real estate/depots.
+2025,Western Power,Safety Programs,$443.4 million,Includes $202.1M for Undergrounding Pilot and $194.3M for pole/conductor replacement.
+2025,Western Power,Clean Energy Link North & Augmentation,$185.9 million,Supports SWIS decarbonisation initiatives.
+2025,Western Power,Growth (Customer Driven Works),$183.6 million,Customer connections and infrastructure.
+2025,Western Power,Growth (Network Augmentation),$74.2 million,Capacity expansion works.
+2025,Western Power,Asset Relocation and Upgrades,$4.4 million,Asset relocation facilitating broader capital works.
+2025,Western Power,Community Batteries,$3.3 million,Commonwealth Government's Community Batteries for Household Solar Program.
+2025,Western Power,Security (Thermal Management),"$224,000",Addresses fault-rated equipment and voltage constraints.
+2025,Horizon Power,Total Asset Investment Program,$189.1 million,
+2025,Horizon Power,Asset Management Plan,$51.4 million,"Includes $12.5M for Safety, $12.4M for Reliability, and $10.2M for Asset Replacement."
+2025,Horizon Power,Kimberley Communities Solar Saver,N/A,Funded from a $10.6 million allocation across 2023-24 and 2024-25.
+2025,Horizon Power,Outage and Life Support Management System,N/A,Funded from an $8.8 million allocation across 2023-24 and 2024-25.
+2025,Horizon Power,Dampier Resilience Project,N/A,Funded from a $3.8 million allocation across 2023-24 and 2024-25.
+2025,Horizon Power,Property - New Builds,N/A,Funded from a $3.8 million allocation across 2023-24 and 2024-25.
+2025,Horizon Power,Remote Communities Transfer,N/A,Part of a $60.8 million investment over the forward estimates.
+2025,Horizon Power,Transmission Infrastructure,N/A,Part of a $147.6 million investment over the forward estimates.
+2026,Synergy,Total Asset Investment Program,$568.4 million,
+2026,Synergy,Thermal Generation Maintenance,$69.8 million,Includes funding for Cockburn Power Station and Kwinana Gas Turbines.
+2026,Synergy,Renewable Assets,N/A,Part of a $199.9 million (Collie Battery) and $424 million (King Rocks) forward estimate provision.
+2026,Western Power,Total Asset Investment Program,$1.708 billion,
+2026,Western Power,Clean Energy Link - North,$542 million,Upgrades to connect wind capacity in the Wheatbelt and Mid West.
+2026,Western Power,Service Capital Projects,$447.8 million,Includes $127.6M for asset replacements and $19.6M for corporate real estate.
+2026,Western Power,Safety Programs,$392.2 million,Includes $148.1M for the Underground Power Program across multiple suburbs.
+2026,Western Power,Asset Relocation and Upgrades,$17.3 million,Relocation of transmission and distribution assets.
+2026,Horizon Power,Total Asset Investment Program,$112.2 million,
+2026,Horizon Power,Asset Management Plan,$52.6 million,Extreme and high-risk mitigation for energy assets.
+2026,Horizon Power,Blackstone Hybrid Energy Solution,N/A,Construction commencing August 2025 to replace temporary diesel generation.
+2026,Horizon Power,Community Batteries,N/A,"Procurement of 10 community batteries across Exmouth, Carnarvon, and Esperance."
+2026,Horizon Power,Advanced Metering Infrastructure Pilot,N/A,Rollout for five remote communities in the Kimberley and Pilbara.
+2026,Horizon Power,Remote Generation Asset Upgrades,N/A,Chile Creek asset upgrades to deliver resilient hybrid generation.
+2026,Horizon Power,Regulated Network Transformer,N/A,Murdoch zone substation replacement funded from 2024-25 allocations.
+2027,Synergy,Total Asset Investment Program,$199.4 million,
+2027,Synergy,Generation and Storage Assets,$63.6 million,"Maintenance of coal, gas, liquid fuel, renewable, and battery assets."
+2027,Synergy,Security of Critical Infrastructure Remediation,$1.65 million,"Identified as ""New Works"" under corporate expenditures."
+2027,Synergy,King Rocks Wind Farm,N/A,Funded via a $132.2 million investment over the forward estimates period.
+2027,Western Power,Total Asset Investment Program,$2.32 billion,
+2027,Western Power,Growth Capital Expenditure,$1.1 billion,"Network expansion supporting decarbonisation, electrification, and housing."
+2027,Western Power,Sustaining Capital Expenditure,$1.1 billion,"Asset renewal to maintain safety and compliance; ICT, SCADA, and metering."
+2027,Western Power,Structural Capital Expenditure,$110 million,"Enables transformer upgrades, new substations, and CBD office accommodation."
+2027,Western Power,Clean Energy Link (Kemerton SIA),$55 million,Replacement higher capacity transformer and network reliability improvements.
+2027,Horizon Power,Total Asset Investment Program,$141.3 million,
+2027,Horizon Power,Advanced Metering Infrastructure,$11 million,Part of a broader $23 million initiative for remote communities.
+2027,Horizon Power,Asset Management Plan,N/A,Expected ~$50.1M sub-total; part of a $929 million 4-year investment.
+2027,Horizon Power,Remote Communities Initiatives,N/A,Part of a broader $189 million 4-year investment.
+2027,Horizon Power,Customer-Funded Works,N/A,Part of a $205 million investment over four years.

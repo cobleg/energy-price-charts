@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WEM Reserve Capacity &amp; Composite Price Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f6fa; --surface: #ffffff; --border: #e2e6ef;
+      --text-primary: #1a1d2e; --text-secondary: #6b7280;
+      --accent-blue: #2563eb; --accent-amber: #d97706;
+      --accent-green: #059669; --accent-red: #dc2626;
+      --accent-purple: #7c3aed; --accent-teal: #0d9488;
+      --radius: 10px; --shadow: 0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text-primary); line-height: 1.6; }
+    header { background: linear-gradient(135deg, #1e3a5f 0%, #0d9488 100%); color: #fff; padding: 36px 48px 32px; }
+    header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -.02em; }
+    header p  { margin-top: 6px; font-size: .95rem; opacity: .82; max-width: 760px; }
+    .header-meta { margin-top: 16px; display: flex; gap: 24px; flex-wrap: wrap; }
+    .header-meta span { font-size: .8rem; opacity: .7; display: flex; align-items: center; gap: 6px; }
+    .badge { display: inline-block; background: rgba(255,255,255,.18); border-radius: 20px; padding: 2px 10px; font-size: .75rem; font-weight: 600; }
+    main { max-width: 1280px; margin: 0 auto; padding: 32px 24px 64px; }
+    section { margin-bottom: 40px; }
+    section h2 { font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+    .section-intro { font-size: .88rem; color: var(--text-secondary); margin-bottom: 18px; line-height: 1.6; max-width: 900px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow); }
+    .card .label { font-size: .75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; }
+    .card .value { font-size: 1.65rem; font-weight: 700; margin-top: 6px; line-height: 1.2; }
+    .card .sub   { font-size: .78rem; color: var(--text-secondary); margin-top: 4px; }
+    .card.blue   { border-top: 3px solid var(--accent-blue); }
+    .card.amber  { border-top: 3px solid var(--accent-amber); }
+    .card.green  { border-top: 3px solid var(--accent-green); }
+    .card.purple { border-top: 3px solid var(--accent-purple); }
+    .card.teal   { border-top: 3px solid var(--accent-teal); }
+    .card.red    { border-top: 3px solid var(--accent-red); }
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 860px) { .chart-grid { grid-template-columns: 1fr; } }
+    .chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+    .chart-box.wide { grid-column: 1 / -1; }
+    .chart-box h3 { font-size: .88rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 18px; }
+    .chart-box .note { font-size: .75rem; color: var(--text-secondary); margin-top: 10px; font-style: italic; }
+    .chart-wrap { position: relative; height: 280px; }
+    .chart-wrap.tall { height: 360px; }
+    .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    thead tr { background: #f0f4ff; }
+    th { padding: 10px 14px; font-weight: 700; text-align: right; white-space: nowrap; color: var(--text-secondary); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; border-bottom: 2px solid var(--border); }
+    th:first-child { text-align: left; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    tbody tr:hover { background: #f8faff; }
+    tbody tr:last-child { border-bottom: none; }
+    td { padding: 9px 14px; text-align: right; white-space: nowrap; }
+    td:first-child { text-align: left; font-weight: 600; color: var(--text-primary); }
+    td.muted { color: var(--text-secondary); }
+    .pill { display: inline-block; border-radius: 12px; padding: 1px 8px; font-size: .7rem; font-weight: 600; }
+    .pill-prelim { background: #fef9c3; color: #92400e; }
+    .pill-est    { background: #e0f2fe; color: #075985; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 720px) { .info-grid { grid-template-columns: 1fr; } }
+    .info-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow); }
+    .info-box h3 { font-size: .92rem; font-weight: 700; margin-bottom: 12px; }
+    .info-box p, .info-box li { font-size: .86rem; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.55; }
+    .info-box ul { padding-left: 18px; }
+    .info-box a { color: var(--accent-blue); text-decoration: none; }
+    .info-box a:hover { text-decoration: underline; }
+    .dl { display: grid; grid-template-columns: 190px 1fr; gap: 6px 12px; font-size: .84rem; }
+    .dl dt { font-weight: 600; color: var(--text-primary); }
+    .dl dd { color: var(--text-secondary); }
+    .era-legend { display: flex; gap: 20px; margin-bottom: 14px; flex-wrap: wrap; }
+    .era-legend span { font-size: .78rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+    .era-dot { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+    footer { text-align: center; font-size: .78rem; color: var(--text-secondary); padding: 24px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>WEM Reserve Capacity &amp; Composite Electricity Price</h1>
+  <p>Combining the WEM Balancing Market (2012–2023) and Reference Trading Price (2023–2026) with the Reserve Capacity Price to form a composite electricity price series — capturing both short-run marginal cost (energy) and long-run marginal cost (capacity) across 14 years.</p>
+  <div class="header-meta">
+    <span><span class="badge">Jul 2012 – Apr 2026</span>&nbsp; Monthly Composite Series</span>
+    <span><span class="badge">2007 – 2027</span>&nbsp; Capacity Market History</span>
+    <span>&#128202; Source: AEMO WEM public data portal</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ── Key Metrics ── -->
+<section>
+  <h2>Key Metrics</h2>
+  <div class="cards" id="cards"></div>
+</section>
+
+<!-- ── Monthly Price History ── -->
+<section>
+  <h2>Monthly Market Price History — Balancing Market &amp; WEM DE (Jul 2012 – Apr 2026)</h2>
+  <p class="section-intro">The WEM underwent a major structural reform in October 2023, transitioning from the Balancing Market (centrally dispatched, with an administered price floor and cap) to the new Real-Time Market (Reference Trading Price). The vertical dashed line marks this transition.</p>
+  <div class="era-legend">
+    <span><span class="era-dot" style="background:rgba(37,99,235,.7)"></span> Balancing Market (Jul 2012 – Sep 2023)</span>
+    <span><span class="era-dot" style="background:rgba(13,148,136,.7)"></span> WEM DE — Reference Trading Price (Oct 2023 – Apr 2026)</span>
+    <span><span class="era-dot" style="background:rgba(220,38,38,.5);border:1px dashed rgba(220,38,38,.8)"></span> WEM Reform (Oct 2023)</span>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-box wide">
+      <h3>Monthly Mean Market Price ($/MWh) — Full Series</h3>
+      <div class="chart-wrap tall"><canvas id="priceHistoryChart"></canvas></div>
+      <p class="note">&#9670; Balancing Market prices reflect the interval clearing price under the Balancing Merit Order. &#9670; WEM DE prices reflect the Reference Trading Price — a time-weighted average of Market Clearing Prices per trading interval. &#9670; Note different price floor/cap regimes across the two market structures.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Composite Price ── -->
+<section>
+  <h2>Composite Price — Energy + Capacity Components (2012 – 2026)</h2>
+  <p class="section-intro">The composite price adds the annualised Reserve Capacity cost per MWh (long-run capital cost recovery) on top of the monthly mean market price (short-run marginal cost). The capacity component steps up or down each October when a new capacity year begins and a new Reserve Capacity Price takes effect.</p>
+  <div class="chart-grid">
+    <div class="chart-box wide">
+      <h3>Composite Price Components — Energy (SRMC) + Capacity (LRMC) = Total ($/MWh)</h3>
+      <div class="chart-wrap tall"><canvas id="compositePriceChart"></canvas></div>
+      <p class="note">&#9670; Energy band = monthly mean market price. &#9670; Capacity band = annualised Reserve Capacity cost per MWh for the applicable October–September capacity year (Peak RCP &times; Credits &divide; Annual Sent-Out Energy). &#9670; The visible step-changes each October reflect new Reserve Capacity Prices taking effect.</p>
+    </div>
+    <div class="chart-box wide">
+      <h3>Market Price vs Composite Price ($/MWh) — Trend Comparison</h3>
+      <div class="chart-wrap"><canvas id="priceComparisonChart"></canvas></div>
+      <p class="note">The gap between the two lines is the capacity cost component. Narrowing or widening of the gap reflects changes in the Reserve Capacity Price and the volume of sent-out energy relative to the total capacity obligation.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Reserve Capacity Market ── -->
+<section>
+  <h2>Reserve Capacity Market — Annual History (2007–2027)</h2>
+  <p class="section-intro">The Peak Reserve Capacity Price (PRCP) is set annually using a supply-demand curve anchored to the Benchmark Reserve Capacity Price (BRCP) — the ERA-determined annualised cost of a new-entrant peaking plant. The capacity cost per MWh chart now extends back to 2011–12 using the Balancing Market generation data.</p>
+  <div class="chart-grid">
+    <div class="chart-box wide">
+      <h3>Capacity Credits (MW) &amp; Peak Reserve Capacity Price ($ / MW / year)</h3>
+      <div class="chart-wrap tall"><canvas id="rcpHistoryChart"></canvas></div>
+      <p class="note">&#9670; 2026&#8209;27 capacity credits are preliminary. &#9670; Transitional Price applies to Transitional Facilities — existing generators that held Capacity Credits in the 2018 Reserve Capacity Cycle — providing a price floor/ceiling band (CPI-adjusted) for up to 10 years to ensure revenue certainty during the reform period.</p>
+    </div>
+    <div class="chart-box">
+      <h3>Total Annual Capacity Market Cost ($M)</h3>
+      <div class="chart-wrap"><canvas id="totalCostChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+      <h3>Capacity Cost per MWh Sent Out ($/MWh) — by Capacity Year</h3>
+      <div class="chart-wrap"><canvas id="costPerMwhChart"></canvas></div>
+      <p class="note">&#9670; Bars shaded darker = full 12-month data. &#9670; Lighter = estimated (partial year). &#9670; 2011&#8209;12 uses only 3 months of balancing data (Jul&#8209;Sep 2012).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Annual Capacity Data Table ── -->
+<section>
+  <h2>Annual Reserve Capacity Data</h2>
+  <div class="table-wrap">
+    <table id="capTable">
+      <thead>
+        <tr>
+          <th>Capacity Year</th>
+          <th>Credits (MW)</th>
+          <th>Peak RCP ($/MW/yr)</th>
+          <th>Transitional Price</th>
+          <th>Flexible Price</th>
+          <th>Total Cost ($M)</th>
+          <th>Annual MWh</th>
+          <th>Cost / MWh</th>
+        </tr>
+      </thead>
+      <tbody id="capTableBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── Methodology ── -->
+<section>
+  <h2>Methodology &amp; Notes</h2>
+  <div class="info-grid">
+    <div class="info-box">
+      <h3>Two Market Eras — One Price Series</h3>
+      <p>This dashboard spans two distinct WEM market structures:</p>
+      <ul>
+        <li><strong>Balancing Market (Jul 2012 – Sep 2023):</strong> AEMO dispatched scheduled generators via the Balancing Merit Order. The Balancing Price cleared the market each 30-minute interval against non-scheduled (wind/solar) supply and forecast demand. Price floor was typically &#8722;$1,000/MWh; cap was $300/MWh rising to $1,018/MWh by 2022.</li>
+        <li><strong>WEM DE — Reference Trading Price (Oct 2023 – Apr 2026):</strong> The new market structure uses a Real-Time Market with 5-minute dispatch. The Reference Trading Price is a time-weighted average of Market Clearing Prices per 30-minute interval. The price cap is $1,000/MWh; floor varies.</li>
+        <li>Both price series are monthly means of the 30-minute interval clearing prices.</li>
+      </ul>
+      <p style="margin-top:8px;">The generation metric also differs: Balancing Market <em>total generation</em> (scheduled + non-scheduled, MW) reflects all grid-connected output; WEM DE <em>sent-out generation</em> from tt30gen measures commercial facilities only. Both are converted to MWh per 30-minute interval (MW &times; 0.5) before summing.</p>
+    </div>
+    <div class="info-box">
+      <h3>Composite Price — Capacity Cost per MWh</h3>
+      <ul>
+        <li><strong>Step 1 — Total Annual Capacity Cost:</strong> Peak RCP ($/MW/yr) &times; Total Capacity Credits (MW).</li>
+        <li><strong>Step 2 — Annual Sent-Out Energy:</strong> Sum of monthly gen_sum (MWh) for all 12 months in the capacity year (October to September). Each month's gen_sum is normalised to a full-month equivalent: <em>(gen_sum / gen_count) &times; (days_in_month &times; 48)</em>. Partial years are annualised by scaling available months to 12.</li>
+        <li><strong>Step 3:</strong> Cost/MWh = Total Annual Cost &#247; Annual MWh.</li>
+        <li><strong>Composite Price = Market Price + Capacity Cost/MWh.</strong></li>
+      </ul>
+      <p style="margin-top:8px;"><em>Note: Formally, capacity costs are recovered from Market Customers proportional to their Individual Reserve Capacity Requirement (peak consumption share), not total generation. The $/MWh figures shown are indicative system-wide averages, not charges to any specific participant.</em></p>
+    </div>
+    <div class="info-box">
+      <h3>Reserve Capacity Price Types</h3>
+      <ul>
+        <li><strong>Peak Reserve Capacity Price:</strong> Primary price for Peak Capacity Credits. Based on the BRCP (ERA-determined annualised cost of a new-entrant OCGT or battery). Ranges from ~60%–160% of BRCP depending on capacity surplus/scarcity.</li>
+        <li><strong>Peak Transitional Price:</strong> A protected price band (floor and ceiling, CPI-adjusted annually) for <em>Transitional Facilities</em> — existing generators that held Capacity Credits in the 2018 Reserve Capacity Cycle. The band (initially $114,000–$140,000/MW) ensures these facilities receive a predictable revenue stream for up to 10 years, insulating them from sharp price movements during the reform period. New entrants are ineligible.</li>
+        <li><strong>Flexible Reserve Capacity Price (from 2027&#8209;28):</strong> New product for highly-responsive facilities (batteries, fast-start gas). Based on a separate Flexible BRCP reflecting battery storage costs.</li>
+        <li><strong>Capacity Credits:</strong> MW of certified dispatchable capacity assigned by AEMO per facility. The total represents system-wide registered reserve capacity.</li>
+      </ul>
+    </div>
+    <div class="info-box">
+      <h3>Data Sources &amp; Caveats</h3>
+      <dl class="dl">
+        <dt>Balancing Market Prices</dt>
+        <dd><a href="https://www.aemo.com.au/energy-systems/electricity/wholesale-electricity-market-wem/data-wem/market-data-wa" target="_blank">AEMO WEM Market Data (balancing-summary-YYYY.csv)</a>. Jul 2012 – Sep 2023.</dd>
+        <dt>WEM DE Prices</dt>
+        <dd>AEMO WEM DE referenceTradingPrice series. Oct 2023 – Apr 2026.</dd>
+        <dt>Capacity Prices</dt>
+        <dd><a href="https://www.aemo.com.au/energy-systems/electricity/wholesale-electricity-market-wem/wa-reserve-capacity-mechanism/reserve-capacity-price" target="_blank">AEMO Reserve Capacity Price page</a>. AUD/MW/year.</dd>
+        <dt>Capacity Credits</dt>
+        <dd><a href="https://www.aemo.com.au/-/media/files/electricity/wem/reserve_capacity_mechanism/assignment/2024/capacity-credits-since-market-start-up-to-2026-2027.xlsx" target="_blank">AEMO Capacity Credits history</a>. 2026&#8209;27 preliminary.</dd>
+        <dt>2025-10 Generation Anomaly</dt>
+        <dd>WEM DE gen_count = 2,880 (double typical). gen_sum adjusted to 50% to correct likely duplicate aggregation.</dd>
+        <dt>2025&#8209;26 Capacity Year</dt>
+        <dd>7 of 12 months available (Oct 2025 – Apr 2026). Annualised estimate; flagged as estimated.</dd>
+        <dt>2011&#8209;12 Capacity Year</dt>
+        <dd>Only 3 months of balancing data available (Jul&#8209;Sep 2012). Annualised estimate; treat with caution.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Balancing Market: Jul 2012 – Sep 2023 &nbsp;|&nbsp; WEM DE: Oct 2023 – Apr 2026 &nbsp;|&nbsp; Capacity data: 2007 – 2027 &nbsp;|&nbsp; Source: AEMO &nbsp;|&nbsp; Last updated: May 2026
+</footer>
+
+<script>
+// ── Balancing Market monthly data (Jul 2012 – Sep 2023) ──────────────────────
+const BALANCING = [
+  {month:'2012-07',gen_count:1488,gen_sum:1566234.17,price_mean:74.4538, price_min:1.22,   price_max:323.0,  price_std:58.1213,market:'balancing'},
+  {month:'2012-08',gen_count:1488,gen_sum:1502462.67,price_mean:58.7236, price_min:1.22,   price_max:323.0,  price_std:27.1909,market:'balancing'},
+  {month:'2012-09',gen_count:1440,gen_sum:1352337.12,price_mean:47.7302, price_min:-2.89,  price_max:323.0,  price_std:22.1772,market:'balancing'},
+  {month:'2012-10',gen_count:1488,gen_sum:1408621.27,price_mean:48.5462, price_min:-40.96, price_max:107.21, price_std:14.3758,market:'balancing'},
+  {month:'2012-11',gen_count:1440,gen_sum:1386964.58,price_mean:39.2736, price_min:-55.39, price_max:103.46, price_std:26.2603,market:'balancing'},
+  {month:'2012-12',gen_count:1488,gen_sum:1594214.23,price_mean:53.5176, price_min:-54.12, price_max:297.75, price_std:26.5184,market:'balancing'},
+  {month:'2013-01',gen_count:1488,gen_sum:1675791.73,price_mean:50.7854, price_min:-144.01,price_max:323.0,  price_std:33.686, market:'balancing'},
+  {month:'2013-02',gen_count:1344,gen_sum:1598345.99,price_mean:63.0888, price_min:-94.22, price_max:322.5,  price_std:45.0224,market:'balancing'},
+  {month:'2013-03',gen_count:1488,gen_sum:1509659.89,price_mean:32.3566, price_min:-193.86,price_max:124.04, price_std:40.1156,market:'balancing'},
+  {month:'2013-04',gen_count:1440,gen_sum:1459111.72,price_mean:47.2042, price_min:-94.06, price_max:120.44, price_std:19.8519,market:'balancing'},
+  {month:'2013-05',gen_count:1488,gen_sum:1431419.23,price_mean:36.8181, price_min:-124.8, price_max:99.42,  price_std:30.3099,market:'balancing'},
+  {month:'2013-06',gen_count:1440,gen_sum:1478285.89,price_mean:46.6228, price_min:-50.89, price_max:233.26, price_std:22.3391,market:'balancing'},
+  {month:'2013-07',gen_count:1488,gen_sum:1595093.78,price_mean:61.4573, price_min:-38.89, price_max:301.25, price_std:25.5881,market:'balancing'},
+  {month:'2013-08',gen_count:1488,gen_sum:1502756.61,price_mean:55.5004, price_min:-49.45, price_max:140.75, price_std:22.1631,market:'balancing'},
+  {month:'2013-09',gen_count:1440,gen_sum:1429630.21,price_mean:52.6091, price_min:-42.65, price_max:304.5,  price_std:21.8885,market:'balancing'},
+  {month:'2013-10',gen_count:1488,gen_sum:1440308.49,price_mean:57.6825, price_min:-34.73, price_max:136.93, price_std:19.3767,market:'balancing'},
+  {month:'2013-11',gen_count:1440,gen_sum:1450730.9, price_mean:51.7233, price_min:-34.73, price_max:167.49, price_std:23.4102,market:'balancing'},
+  {month:'2013-12',gen_count:1488,gen_sum:1592608.53,price_mean:52.164,  price_min:-34.73, price_max:124.32, price_std:20.3375,market:'balancing'},
+  {month:'2014-01',gen_count:1488,gen_sum:1746628.26,price_mean:54.66,   price_min:-34.73, price_max:122.33, price_std:22.1402,market:'balancing'},
+  {month:'2014-02',gen_count:1344,gen_sum:1591792.61,price_mean:58.9185, price_min:-34.73, price_max:232.53, price_std:23.8197,market:'balancing'},
+  {month:'2014-03',gen_count:1488,gen_sum:1630089.35,price_mean:58.4146, price_min:-17.24, price_max:126.21, price_std:17.1706,market:'balancing'},
+  {month:'2014-04',gen_count:1440,gen_sum:1412889.11,price_mean:57.4372, price_min:-25.69, price_max:122.06, price_std:14.0443,market:'balancing'},
+  {month:'2014-05',gen_count:1488,gen_sum:1521781.83,price_mean:58.8699, price_min:-25.69, price_max:304.5,  price_std:20.0421,market:'balancing'},
+  {month:'2014-06',gen_count:1440,gen_sum:1569286.66,price_mean:69.5532, price_min:-25.69, price_max:305.0,  price_std:38.1294,market:'balancing'},
+  {month:'2014-07',gen_count:1488,gen_sum:1647160.51,price_mean:67.2885, price_min:23.45,  price_max:255.39, price_std:24.5146,market:'balancing'},
+  {month:'2014-08',gen_count:1488,gen_sum:1523780.19,price_mean:46.8795, price_min:-30.27, price_max:127.94, price_std:21.2561,market:'balancing'},
+  {month:'2014-09',gen_count:1440,gen_sum:1425196.33,price_mean:37.0768, price_min:-30.27, price_max:115.34, price_std:16.4314,market:'balancing'},
+  {month:'2014-10',gen_count:1488,gen_sum:1439345.87,price_mean:35.0549, price_min:19.63,  price_max:106.18, price_std:10.2208,market:'balancing'},
+  {month:'2014-11',gen_count:1440,gen_sum:1435390.8, price_mean:41.7152, price_min:21.82,  price_max:111.51, price_std:15.2209,market:'balancing'},
+  {month:'2014-12',gen_count:1488,gen_sum:1524644.14,price_mean:30.4159, price_min:-30.27, price_max:83.29,  price_std:8.6207, market:'balancing'},
+  {month:'2015-01',gen_count:1488,gen_sum:1708181.49,price_mean:50.9725, price_min:-30.27, price_max:330.0,  price_std:51.6055,market:'balancing'},
+  {month:'2015-02',gen_count:1344,gen_sum:1600325.39,price_mean:54.1717, price_min:0.02,   price_max:326.7,  price_std:37.9304,market:'balancing'},
+  {month:'2015-03',gen_count:1488,gen_sum:1597797.39,price_mean:39.5565, price_min:-30.27, price_max:197.09, price_std:18.0916,market:'balancing'},
+  {month:'2015-04',gen_count:1440,gen_sum:1400164.21,price_mean:33.5262, price_min:-30.27, price_max:125.25, price_std:20.8837,market:'balancing'},
+  {month:'2015-05',gen_count:1488,gen_sum:1521162.58,price_mean:37.3817, price_min:-30.27, price_max:128.26, price_std:21.5029,market:'balancing'},
+  {month:'2015-06',gen_count:1440,gen_sum:1516970.97,price_mean:38.3104, price_min:-30.27, price_max:330.0,  price_std:25.0803,market:'balancing'},
+  {month:'2015-07',gen_count:1488,gen_sum:1603690.98,price_mean:42.8907, price_min:-30.13, price_max:195.91, price_std:21.9582,market:'balancing'},
+  {month:'2015-08',gen_count:1488,gen_sum:1543326.35,price_mean:48.2654, price_min:-30.13, price_max:178.11, price_std:25.5491,market:'balancing'},
+  {month:'2015-09',gen_count:1440,gen_sum:1429678.14,price_mean:40.9519, price_min:-29.61, price_max:172.3,  price_std:24.1284,market:'balancing'},
+  {month:'2015-10',gen_count:1488,gen_sum:1443920.86,price_mean:53.3468, price_min:1.0,    price_max:209.33, price_std:26.9758,market:'balancing'},
+  {month:'2015-11',gen_count:1440,gen_sum:1488912.03,price_mean:49.2697, price_min:10.89,  price_max:217.25, price_std:23.175, market:'balancing'},
+  {month:'2015-12',gen_count:1488,gen_sum:1560518.23,price_mean:41.4137, price_min:-30.06, price_max:177.85, price_std:22.0079,market:'balancing'},
+  {month:'2016-01',gen_count:1488,gen_sum:1711661.58,price_mean:49.7163, price_min:-30.13, price_max:228.23, price_std:28.0406,market:'balancing'},
+  {month:'2016-02',gen_count:1392,gen_sum:1629742.27,price_mean:44.2798, price_min:-29.61, price_max:101.81, price_std:17.078, market:'balancing'},
+  {month:'2016-03',gen_count:1488,gen_sum:1636633.24,price_mean:44.0863, price_min:-14.31, price_max:168.19, price_std:19.8652,market:'balancing'},
+  {month:'2016-04',gen_count:1440,gen_sum:1410043.12,price_mean:50.8796, price_min:20.52,  price_max:157.5,  price_std:23.4022,market:'balancing'},
+  {month:'2016-05',gen_count:1488,gen_sum:1522238.25,price_mean:63.4147, price_min:-29.07, price_max:209.9,  price_std:32.0609,market:'balancing'},
+  {month:'2016-06',gen_count:1440,gen_sum:1602231.61,price_mean:61.0929, price_min:21.51,  price_max:219.21, price_std:30.1274,market:'balancing'},
+  {month:'2016-07',gen_count:1488,gen_sum:1658465.07,price_mean:57.2191, price_min:-29.94, price_max:240.0,  price_std:39.5789,market:'balancing'},
+  {month:'2016-08',gen_count:1488,gen_sum:1649340.5, price_mean:70.6096, price_min:21.96,  price_max:240.0,  price_std:54.6944,market:'balancing'},
+  {month:'2016-09',gen_count:1440,gen_sum:1534390.35,price_mean:72.8415, price_min:22.67,  price_max:240.0,  price_std:44.7438,market:'balancing'},
+  {month:'2016-10',gen_count:1488,gen_sum:1419432.25,price_mean:48.9147, price_min:-30.2,  price_max:180.2,  price_std:25.7087,market:'balancing'},
+  {month:'2016-11',gen_count:1440,gen_sum:1424693.62,price_mean:45.1504, price_min:-29.03, price_max:177.43, price_std:22.0278,market:'balancing'},
+  {month:'2016-12',gen_count:1488,gen_sum:1483617.82,price_mean:40.7607, price_min:-30.45, price_max:181.57, price_std:25.2243,market:'balancing'},
+  {month:'2017-01',gen_count:1488,gen_sum:1587961.07,price_mean:54.9668, price_min:-30.15, price_max:208.03, price_std:36.0989,market:'balancing'},
+  {month:'2017-02',gen_count:1344,gen_sum:1458789.11,price_mean:56.3659, price_min:4.65,   price_max:198.76, price_std:34.3787,market:'balancing'},
+  {month:'2017-03',gen_count:1488,gen_sum:1572842.21,price_mean:56.9209, price_min:21.49,  price_max:222.78, price_std:32.4285,market:'balancing'},
+  {month:'2017-04',gen_count:1440,gen_sum:1388272.27,price_mean:47.0433, price_min:21.57,  price_max:212.27, price_std:21.1422,market:'balancing'},
+  {month:'2017-05',gen_count:1488,gen_sum:1496394.64,price_mean:57.8053, price_min:-30.15, price_max:240.0,  price_std:32.1994,market:'balancing'},
+  {month:'2017-06',gen_count:1440,gen_sum:1515571.99,price_mean:63.7358, price_min:22.13,  price_max:234.05, price_std:30.7785,market:'balancing'},
+  {month:'2017-07',gen_count:1488,gen_sum:1642772.79,price_mean:69.9365, price_min:-30.2,  price_max:206.62, price_std:36.5627,market:'balancing'},
+  {month:'2017-08',gen_count:1488,gen_sum:1613554.52,price_mean:63.402,  price_min:-30.49, price_max:203.15, price_std:43.1172,market:'balancing'},
+  {month:'2017-09',gen_count:1440,gen_sum:1419238.53,price_mean:63.0569, price_min:-30.2,  price_max:218.02, price_std:39.6598,market:'balancing'},
+  {month:'2017-10',gen_count:1488,gen_sum:1396084.37,price_mean:59.8258, price_min:-30.36, price_max:213.37, price_std:40.7037,market:'balancing'},
+  {month:'2017-11',gen_count:1440,gen_sum:1436299.85,price_mean:61.9273, price_min:21.11,  price_max:207.25, price_std:40.37,  market:'balancing'},
+  {month:'2017-12',gen_count:1488,gen_sum:1500893.43,price_mean:45.7848, price_min:-30.49, price_max:193.66, price_std:30.5296,market:'balancing'},
+  {month:'2018-01',gen_count:1488,gen_sum:1572041.13,price_mean:41.7886, price_min:-30.46, price_max:269.38, price_std:32.5217,market:'balancing'},
+  {month:'2018-02',gen_count:1344,gen_sum:1405299.02,price_mean:42.7918, price_min:-30.4,  price_max:161.63, price_std:22.9583,market:'balancing'},
+  {month:'2018-03',gen_count:1488,gen_sum:1562829.81,price_mean:44.4129, price_min:-30.49, price_max:243.38, price_std:29.0525,market:'balancing'},
+  {month:'2018-04',gen_count:1440,gen_sum:1405300.17,price_mean:40.2707, price_min:-30.49, price_max:185.13, price_std:20.2878,market:'balancing'},
+  {month:'2018-05',gen_count:1488,gen_sum:1491659.03,price_mean:41.5543, price_min:-30.36, price_max:155.34, price_std:20.7973,market:'balancing'},
+  {month:'2018-06',gen_count:1440,gen_sum:1574865.81,price_mean:64.3967, price_min:-30.36, price_max:269.34, price_std:33.8987,market:'balancing'},
+  {month:'2018-07',gen_count:1488,gen_sum:1577646.76,price_mean:49.9608, price_min:-30.04, price_max:175.59, price_std:26.193, market:'balancing'},
+  {month:'2018-08',gen_count:1488,gen_sum:1583171.51,price_mean:55.9583, price_min:-29.99, price_max:302.0,  price_std:38.6364,market:'balancing'},
+  {month:'2018-09',gen_count:1440,gen_sum:1391515.72,price_mean:52.4787, price_min:-30.01, price_max:200.99, price_std:34.0969,market:'balancing'},
+  {month:'2018-10',gen_count:1488,gen_sum:1344545.37,price_mean:46.0472, price_min:-29.97, price_max:181.78, price_std:25.1529,market:'balancing'},
+  {month:'2018-11',gen_count:1440,gen_sum:1264147.1, price_mean:43.2278, price_min:-65.47, price_max:171.57, price_std:28.149, market:'balancing'},
+  {month:'2018-12',gen_count:1488,gen_sum:1417618.46,price_mean:39.1757, price_min:-29.95, price_max:146.62, price_std:18.1508,market:'balancing'},
+  {month:'2019-01',gen_count:1488,gen_sum:1478170.5, price_mean:36.5833, price_min:-29.99, price_max:146.33, price_std:21.2098,market:'balancing'},
+  {month:'2019-02',gen_count:1344,gen_sum:1429373.49,price_mean:44.154,  price_min:-9.94,  price_max:192.7,  price_std:21.2749,market:'balancing'},
+  {month:'2019-03',gen_count:1488,gen_sum:1483000.53,price_mean:49.926,  price_min:-15.0,  price_max:192.43, price_std:27.9476,market:'balancing'},
+  {month:'2019-04',gen_count:1440,gen_sum:1352997.63,price_mean:41.6975, price_min:-15.0,  price_max:192.33, price_std:22.9403,market:'balancing'},
+  {month:'2019-05',gen_count:1488,gen_sum:1490101.07,price_mean:45.682,  price_min:-43.57, price_max:268.76, price_std:26.3127,market:'balancing'},
+  {month:'2019-06',gen_count:1440,gen_sum:1520466.1, price_mean:47.6531, price_min:-9.94,  price_max:292.68, price_std:30.503, market:'balancing'},
+  {month:'2019-07',gen_count:1488,gen_sum:1545076.15,price_mean:44.0126, price_min:-43.62, price_max:302.0,  price_std:31.9205,market:'balancing'},
+  {month:'2019-08',gen_count:1488,gen_sum:1517959.37,price_mean:44.1547, price_min:-45.62, price_max:213.61, price_std:26.7748,market:'balancing'},
+  {month:'2019-09',gen_count:1440,gen_sum:1342217.77,price_mean:39.6581, price_min:-45.43, price_max:119.84, price_std:20.8118,market:'balancing'},
+  {month:'2019-10',gen_count:1488,gen_sum:1354638.09,price_mean:47.0892, price_min:-1000.0,price_max:153.1,  price_std:54.8699,market:'balancing'},
+  {month:'2019-11',gen_count:1440,gen_sum:1355202.46,price_mean:51.3697, price_min:-15.13, price_max:234.62, price_std:29.6176,market:'balancing'},
+  {month:'2019-12',gen_count:1488,gen_sum:1637087.48,price_mean:59.4972, price_min:-52.79, price_max:227.78, price_std:34.9619,market:'balancing'},
+  {month:'2020-01',gen_count:1488,gen_sum:1523385.58,price_mean:51.2094, price_min:-45.2,  price_max:235.0,  price_std:25.726, market:'balancing'},
+  {month:'2020-02',gen_count:1392,gen_sum:1596823.52,price_mean:62.8831, price_min:-15.13, price_max:235.0,  price_std:36.6897,market:'balancing'},
+  {month:'2020-03',gen_count:1488,gen_sum:1489445.2, price_mean:47.5108, price_min:-60.25, price_max:235.0,  price_std:25.4698,market:'balancing'},
+  {month:'2020-04',gen_count:1440,gen_sum:1341232.67,price_mean:45.1036, price_min:-50.07, price_max:159.34, price_std:25.6282,market:'balancing'},
+  {month:'2020-05',gen_count:1488,gen_sum:1437659.98,price_mean:56.0093, price_min:-38.32, price_max:235.0,  price_std:35.2331,market:'balancing'},
+  {month:'2020-06',gen_count:1440,gen_sum:1451817.82,price_mean:55.4973, price_min:-38.32, price_max:193.75, price_std:31.8315,market:'balancing'},
+  {month:'2020-07',gen_count:1488,gen_sum:1521590.64,price_mean:49.6792, price_min:-38.66, price_max:159.99, price_std:27.6995,market:'balancing'},
+  {month:'2020-08',gen_count:1488,gen_sum:1508520.6, price_mean:49.8201, price_min:-1000.0,price_max:235.0,  price_std:61.0371,market:'balancing'},
+  {month:'2020-09',gen_count:1440,gen_sum:1323952.58,price_mean:44.8373, price_min:-1000.0,price_max:267.0,  price_std:61.4234,market:'balancing'},
+  {month:'2020-10',gen_count:1488,gen_sum:1305680.24,price_mean:46.1803, price_min:-75.0,  price_max:267.0,  price_std:40.5851,market:'balancing'},
+  {month:'2020-11',gen_count:1440,gen_sum:1260842.56,price_mean:39.4517, price_min:-202.41,price_max:175.12, price_std:28.5605,market:'balancing'},
+  {month:'2020-12',gen_count:1488,gen_sum:1519663.65,price_mean:39.2657, price_min:-999.47,price_max:267.0,  price_std:51.8359,market:'balancing'},
+  {month:'2021-01',gen_count:1488,gen_sum:1634229.23,price_mean:49.9698, price_min:-75.0,  price_max:183.26, price_std:40.7253,market:'balancing'},
+  {month:'2021-02',gen_count:1344,gen_sum:1395228.85,price_mean:36.3713, price_min:-75.0,  price_max:169.05, price_std:30.4072,market:'balancing'},
+  {month:'2021-03',gen_count:1488,gen_sum:1528533.85,price_mean:49.544,  price_min:-47.92, price_max:267.0,  price_std:32.96,  market:'balancing'},
+  {month:'2021-04',gen_count:1440,gen_sum:1364392.37,price_mean:51.3227, price_min:-72.52, price_max:171.03, price_std:27.7885,market:'balancing'},
+  {month:'2021-05',gen_count:1488,gen_sum:1474000.79,price_mean:60.5509, price_min:-40.0,  price_max:267.0,  price_std:37.6649,market:'balancing'},
+  {month:'2021-06',gen_count:1440,gen_sum:1611532.57,price_mean:61.1597, price_min:-73.83, price_max:267.0,  price_std:42.4695,market:'balancing'},
+  {month:'2021-07',gen_count:1488,gen_sum:1634782.42,price_mean:52.2464, price_min:-40.0,  price_max:267.0,  price_std:31.9178,market:'balancing'},
+  {month:'2021-08',gen_count:1488,gen_sum:1515713.02,price_mean:48.3956, price_min:-78.88, price_max:152.35, price_std:33.9216,market:'balancing'},
+  {month:'2021-09',gen_count:1440,gen_sum:1314118.83,price_mean:45.2903, price_min:-90.94, price_max:169.96, price_std:33.8723,market:'balancing'},
+  {month:'2021-10',gen_count:1488,gen_sum:1316172.27,price_mean:47.3548, price_min:-90.94, price_max:267.0,  price_std:37.2552,market:'balancing'},
+  {month:'2021-11',gen_count:1440,gen_sum:1247035.39,price_mean:40.2361, price_min:-90.94, price_max:171.5,  price_std:35.6798,market:'balancing'},
+  {month:'2021-12',gen_count:1488,gen_sum:1535330.51,price_mean:54.4682, price_min:-90.94, price_max:267.0,  price_std:44.7182,market:'balancing'},
+  {month:'2022-01',gen_count:1488,gen_sum:1673588.88,price_mean:52.3914, price_min:-79.48, price_max:267.0,  price_std:36.9361,market:'balancing'},
+  {month:'2022-02',gen_count:1344,gen_sum:1610692.08,price_mean:63.379,  price_min:-71.5,  price_max:290.0,  price_std:37.3251,market:'balancing'},
+  {month:'2022-03',gen_count:1488,gen_sum:1546212.83,price_mean:48.8074, price_min:-75.32, price_max:290.0,  price_std:35.1886,market:'balancing'},
+  {month:'2022-04',gen_count:1440,gen_sum:1362113.65,price_mean:65.1423, price_min:-90.94, price_max:290.0,  price_std:39.4329,market:'balancing'},
+  {month:'2022-05',gen_count:1488,gen_sum:1470426.42,price_mean:60.2473, price_min:-75.0,  price_max:290.0,  price_std:30.3121,market:'balancing'},
+  {month:'2022-06',gen_count:1440,gen_sum:1525700.93,price_mean:66.3574, price_min:-40.0,  price_max:188.57, price_std:31.8441,market:'balancing'},
+  {month:'2022-07',gen_count:1488,gen_sum:1598898.53,price_mean:71.7554, price_min:-10.69, price_max:290.0,  price_std:32.9449,market:'balancing'},
+  {month:'2022-08',gen_count:1488,gen_sum:1607686.37,price_mean:70.7713, price_min:-80.92, price_max:290.0,  price_std:43.0714,market:'balancing'},
+  {month:'2022-09',gen_count:1440,gen_sum:1337136.74,price_mean:72.9266, price_min:-90.28, price_max:290.0,  price_std:45.6659,market:'balancing'},
+  {month:'2022-10',gen_count:1488,gen_sum:1243109.92,price_mean:75.7722, price_min:-1000.0,price_max:290.0,  price_std:53.1272,market:'balancing'},
+  {month:'2022-11',gen_count:1440,gen_sum:1183661.02,price_mean:70.6819, price_min:-203.33,price_max:1018.0, price_std:70.1019,market:'balancing'},
+  {month:'2022-12',gen_count:1488,gen_sum:1371060.76,price_mean:71.955,  price_min:-90.28, price_max:290.0,  price_std:56.8077,market:'balancing'},
+  {month:'2023-01',gen_count:1488,gen_sum:1533837.08,price_mean:67.9642, price_min:-999.56,price_max:290.0,  price_std:52.3604,market:'balancing'},
+  {month:'2023-02',gen_count:1344,gen_sum:1443761.97,price_mean:73.3076, price_min:-70.28, price_max:324.0,  price_std:38.0935,market:'balancing'},
+  {month:'2023-03',gen_count:1488,gen_sum:1467662.32,price_mean:81.9508, price_min:-90.28, price_max:324.0,  price_std:43.6057,market:'balancing'},
+  {month:'2023-04',gen_count:1440,gen_sum:1314107.47,price_mean:85.0921, price_min:-1000.0,price_max:324.0,  price_std:57.7182,market:'balancing'},
+  {month:'2023-05',gen_count:1488,gen_sum:1462148.51,price_mean:91.5102, price_min:-90.28, price_max:324.0,  price_std:64.2266,market:'balancing'},
+  {month:'2023-06',gen_count:1440,gen_sum:1647967.86,price_mean:129.6786,price_min:-70.28, price_max:805.0,  price_std:91.8114,market:'balancing'},
+  {month:'2023-07',gen_count:1488,gen_sum:1625220.18,price_mean:101.7522,price_min:-88.5,  price_max:324.0,  price_std:58.6247,market:'balancing'},
+  {month:'2023-08',gen_count:1488,gen_sum:1532477.94,price_mean:96.7564, price_min:-88.5,  price_max:324.0,  price_std:45.9474,market:'balancing'},
+  {month:'2023-09',gen_count:1440,gen_sum:1291812.98,price_mean:68.3828, price_min:-1000.0,price_max:294.42, price_std:73.3594,market:'balancing'},
+];
+
+// ── WEM DE monthly data (Oct 2023 – Apr 2026) ────────────────────────────────
+const WEMDE = [
+  {month:'2023-10',gen_count:1488, gen_sum:1290937.20, price_mean:78.38,  price_min:-716.71,price_max:738.00,  price_std:124.64,market:'wemde'},
+  {month:'2023-11',gen_count:1440, gen_sum:1402118.28, price_mean:99.51,  price_min:-341.58,price_max:738.00,  price_std:139.62,market:'wemde'},
+  {month:'2023-12',gen_count:1488, gen_sum:1481561.86, price_mean:73.52,  price_min:-687.07,price_max:738.00,  price_std:137.31,market:'wemde'},
+  {month:'2024-01',gen_count:1488, gen_sum:1603602.39, price_mean:78.85,  price_min:-868.32,price_max:738.00,  price_std:129.81,market:'wemde'},
+  {month:'2024-02',gen_count:1392, gen_sum:1727381.83, price_mean:75.41,  price_min:-1000.0,price_max:738.00,  price_std:126.84,market:'wemde'},
+  {month:'2024-03',gen_count:1488, gen_sum:1494268.04, price_mean:81.01,  price_min:-116.41,price_max:738.00,  price_std:119.01,market:'wemde'},
+  {month:'2024-04',gen_count:1440, gen_sum:1366397.60, price_mean:75.71,  price_min:-687.07,price_max:738.00,  price_std:133.32,market:'wemde'},
+  {month:'2024-05',gen_count:1488, gen_sum:1476221.81, price_mean:89.46,  price_min:-159.84,price_max:738.00,  price_std:134.58,market:'wemde'},
+  {month:'2024-06',gen_count:1440, gen_sum:1528283.24, price_mean:70.84,  price_min:-1000.0,price_max:738.00,  price_std:160.15,market:'wemde'},
+  {month:'2024-07',gen_count:1488, gen_sum:1601465.02, price_mean:87.06,  price_min:-1000.0,price_max:738.00,  price_std:132.05,market:'wemde'},
+  {month:'2024-08',gen_count:1488, gen_sum:1535339.06, price_mean:97.46,  price_min:-541.24,price_max:738.00,  price_std:131.88,market:'wemde'},
+  {month:'2024-09',gen_count:1440, gen_sum:1306083.30, price_mean:55.14,  price_min:-1000.0,price_max:738.00,  price_std:174.28,market:'wemde'},
+  {month:'2024-10',gen_count:1488, gen_sum:1312477.30, price_mean:86.91,  price_min:-1000.0,price_max:734.76,  price_std:192.68,market:'wemde'},
+  {month:'2024-11',gen_count:1440, gen_sum:1251213.55, price_mean:66.62,  price_min:-1000.0,price_max:738.00,  price_std:152.70,market:'wemde'},
+  {month:'2024-12',gen_count:1488, gen_sum:1562556.01, price_mean:85.81,  price_min:-61.56, price_max:738.00,  price_std:70.08, market:'wemde'},
+  {month:'2025-01',gen_count:1488, gen_sum:1745413.61, price_mean:94.75,  price_min:-62.94, price_max:1000.00, price_std:66.86, market:'wemde'},
+  {month:'2025-02',gen_count:1344, gen_sum:1495701.69, price_mean:83.34,  price_min:-47.02, price_max:585.11,  price_std:50.40, market:'wemde'},
+  {month:'2025-03',gen_count:1488, gen_sum:1552500.03, price_mean:88.48,  price_min:-150.52,price_max:1051.00, price_std:72.23, market:'wemde'},
+  {month:'2025-04',gen_count:1503, gen_sum:1465752.75, price_mean:85.82,  price_min:-44.54, price_max:485.18,  price_std:42.15, market:'wemde'},
+  {month:'2025-05',gen_count:1488, gen_sum:1518753.46, price_mean:88.92,  price_min:-40.64, price_max:1100.00, price_std:50.89, market:'wemde'},
+  {month:'2025-06',gen_count:1419, gen_sum:1599793.40, price_mean:95.58,  price_min:-33.95, price_max:749.52,  price_std:43.31, market:'wemde'},
+  {month:'2025-07',gen_count:1488, gen_sum:1778938.28, price_mean:103.68, price_min:-3.46,  price_max:424.07,  price_std:38.22, market:'wemde'},
+  {month:'2025-08',gen_count:1120, gen_sum:1261806.54, price_mean:93.11,  price_min:-20.31, price_max:404.09,  price_std:41.06, market:'wemde'},
+  {month:'2025-09',gen_count:1504, gen_sum:1455884.49, price_mean:92.67,  price_min:-32.08, price_max:344.88,  price_std:48.30, market:'wemde'},
+  {month:'2025-10',gen_count:2880, gen_sum:2609356.35, price_mean:85.80,  price_min:-37.93, price_max:310.93,  price_std:41.60, market:'wemde'}, // anomaly: halved
+  {month:'2025-11',gen_count:1024, gen_sum:887572.07,  price_mean:55.26,  price_min:-31.91, price_max:567.28,  price_std:43.40, market:'wemde'},
+  {month:'2025-12',gen_count:1488, gen_sum:1547007.23, price_mean:66.42,  price_min:-15.46, price_max:1000.00, price_std:58.51, market:'wemde'},
+  {month:'2026-01',gen_count:1152, gen_sum:1265379.20, price_mean:84.20,  price_min:-16.01, price_max:1000.00, price_std:49.38, market:'wemde'},
+  {month:'2026-02',gen_count:1248, gen_sum:1427057.66, price_mean:87.40,  price_min:-9.30,  price_max:900.00,  price_std:49.21, market:'wemde'},
+  {month:'2026-03',gen_count:1296, gen_sum:1451137.06, price_mean:93.20,  price_min:-6.08,  price_max:329.14,  price_std:27.15, market:'wemde'},
+  {month:'2026-04',gen_count:496,  gen_sum:473166.44,  price_mean:92.66,  price_min:-16.72, price_max:120.26,  price_std:15.36, market:'wemde'},
+];
+
+// ── Reserve capacity annual data ─────────────────────────────────────────────
+const CAPACITY = [
+  {year:2005,credits:3531.1,   peak_price:null,      trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2006,credits:3744.4,   peak_price:null,      trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2007,credits:4113.393, peak_price:127500.00, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2008,credits:4599.785, peak_price:97834.89,  trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2009,credits:5136.43,  peak_price:108458.57, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2010,credits:5258.55,  peak_price:144235.38, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2011,credits:5493.486, peak_price:131804.58, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2012,credits:5995.613, peak_price:186001.04, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2013,credits:6086.829, peak_price:178476.69, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2014,credits:6040.161, peak_price:122427.87, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2015,credits:5683.315, peak_price:120199.31, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2016,credits:5618.442, peak_price:121888.94, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2017,credits:5193.925, peak_price:111752.53, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2018,credits:4819.033, peak_price:138760.39, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2019,credits:4887.97,  peak_price:126683.47, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2020,credits:4965.551, peak_price:114134.15, trans_price:null,      flex_price:null,      fixed_price:null},
+  {year:2021,credits:4924.847, peak_price:78573.33,  trans_price:114000.00, flex_price:null,      fixed_price:null},
+  {year:2022,credits:4807.237, peak_price:85294.19,  trans_price:115425.00, flex_price:null,      fixed_price:null},
+  {year:2023,credits:4726.572, peak_price:105949.27, trans_price:118599.19, flex_price:null,      fixed_price:null},
+  {year:2024,credits:4596.425, peak_price:194783.54, trans_price:150745.81, flex_price:null,      fixed_price:null},
+  {year:2025,credits:4716.729, peak_price:251420.00, trans_price:155418.93, flex_price:null,      fixed_price:null},
+  {year:2026,credits:5952.655, peak_price:216091.78, trans_price:160392.34, flex_price:null,      fixed_price:null, prelim:true},
+  {year:2027,credits:null,     peak_price:360700.00, trans_price:177636.12, flex_price:180350.00, fixed_price:360700.00},
+];
+
+// ── Combined monthly series ───────────────────────────────────────────────────
+const ALL_MONTHLY = [...BALANCING, ...WEMDE];
+const REFORM_MONTH = '2023-10';
+
+// ── Utilities ────────────────────────────────────────────────────────────────
+function fmt(n, dec=0) { return n == null ? '—' : n.toLocaleString('en-AU', {minimumFractionDigits:dec, maximumFractionDigits:dec}); }
+function fmtM(n) { return n == null ? '—' : '$' + (n/1e6).toFixed(1) + 'M'; }
+function fmtCapYear(y) { return `${y}–${String(y+1).slice(-2)}`; }
+
+function daysInMonth(year, month) { return new Date(year, month, 0).getDate(); }
+
+function getCapacityYear(monthStr) {
+  const [y, m] = monthStr.split('-').map(Number);
+  return m >= 10 ? y : y - 1;
+}
+
+function normalisedGenSum(r) {
+  const [y, m] = r.month.split('-').map(Number);
+  const expected = daysInMonth(y, m) * 48;
+  if (r.month === '2025-10') return (r.gen_sum / 2) / (r.gen_count / 2) * expected;
+  return (r.gen_sum / r.gen_count) * expected;
+}
+
+// ── Capacity-year energy from ALL_MONTHLY ────────────────────────────────────
+const capYearEnergy = {};
+ALL_MONTHLY.forEach(r => {
+  const cy = getCapacityYear(r.month);
+  if (!capYearEnergy[cy]) capYearEnergy[cy] = { normSum: 0, monthCount: 0 };
+  capYearEnergy[cy].normSum     += normalisedGenSum(r);
+  capYearEnergy[cy].monthCount  += 1;
+});
+Object.values(capYearEnergy).forEach(d => {
+  d.isFull = d.monthCount === 12;
+  d.annualisedMWh = d.isFull ? d.normSum : d.normSum / d.monthCount * 12;
+});
+
+// ── Capacity cost per MWh ────────────────────────────────────────────────────
+const capCostByYear = {};
+CAPACITY.forEach(d => {
+  if (d.peak_price != null && d.credits != null && capYearEnergy[d.year]) {
+    const totalCost = d.peak_price * d.credits;
+    const mwh = capYearEnergy[d.year].annualisedMWh;
+    capCostByYear[d.year] = {
+      totalCost, costPerMWh: totalCost / mwh,
+      annualisedMWh: mwh,
+      isEstimated: !capYearEnergy[d.year].isFull,
+    };
+  }
+});
+
+// ── Composite monthly series ─────────────────────────────────────────────────
+const COMPOSITE = ALL_MONTHLY.map(r => {
+  const cy  = getCapacityYear(r.month);
+  const cap = capCostByYear[cy];
+  return { ...r, capacityYear: cy,
+    capCost:   cap ? cap.costPerMWh : null,
+    composite: cap ? r.price_mean + cap.costPerMWh : null,
+    capIsEst:  cap ? cap.isEstimated : false,
+  };
+});
+
+// ── Colour palette ───────────────────────────────────────────────────────────
+const C = {
+  blue:     '#2563eb', blueA:  'rgba(37,99,235,.55)', blueFill: 'rgba(37,99,235,.18)',
+  amber:    '#d97706', amberA: 'rgba(217,119,6,.55)', amberFill:'rgba(217,119,6,.18)',
+  teal:     '#0d9488', tealA:  'rgba(13,148,136,.6)', tealFill: 'rgba(13,148,136,.15)',
+  green:    '#059669', red:    '#dc2626', purple: '#7c3aed', grey: '#9ca3af',
+};
+
+// ── Era vertical-line plugin ─────────────────────────────────────────────────
+const eraLinePlugin = {
+  id: 'eraLine',
+  afterDraw(chart) {
+    const labels = chart.data.labels;
+    if (!labels) return;
+    const idx = labels.indexOf(REFORM_MONTH);
+    if (idx < 0) return;
+    const { ctx, scales: { x, y } } = chart;
+    const xPx = x.getPixelForValue(idx);
+    ctx.save();
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(220,38,38,.55)';
+    ctx.setLineDash([6, 3]);
+    ctx.lineWidth = 1.5;
+    ctx.moveTo(xPx, y.top);
+    ctx.lineTo(xPx, y.bottom);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(220,38,38,.75)';
+    ctx.font = '10px -apple-system,sans-serif';
+    ctx.fillText('WEM Reform', xPx + 4, y.top + 13);
+    ctx.restore();
+  }
+};
+
+// ── Metric Cards ─────────────────────────────────────────────────────────────
+const balAvg   = BALANCING.reduce((s,r) => s + r.price_mean, 0) / BALANCING.length;
+const wemdeAvg = WEMDE.reduce((s,r) => s + r.price_mean, 0) / WEMDE.length;
+const cap2025  = CAPACITY.find(d => d.year === 2025);
+const cost2024 = capCostByYear[2024];
+const cost2025 = capCostByYear[2025];
+const latestComp = [...COMPOSITE].reverse().find(r => r.composite != null);
+
+const cardsData = [
+  { label:'Avg Price — Balancing Era',   value:'$' + balAvg.toFixed(2)+'/MWh',  sub:'Jul 2012 – Sep 2023 monthly mean',       cls:'blue'   },
+  { label:'Avg Price — WEM DE Era',      value:'$' + wemdeAvg.toFixed(2)+'/MWh',sub:'Oct 2023 – Apr 2026 monthly mean',       cls:'teal'   },
+  { label:'Peak RCP 2025–26',            value:'$' + fmt(cap2025.peak_price/1000,0)+'k/MW/yr', sub:fmt(cap2025.credits,0)+' MW capacity credits', cls:'amber'  },
+  { label:'Total Capacity Cost 2025–26', value:'$' + (cap2025.peak_price*cap2025.credits/1e9).toFixed(2)+'B', sub:'Peak RCP × Credits (annual)', cls:'purple' },
+  { label:'Capacity Cost/MWh 2024–25',   value: cost2024 ? '$'+cost2024.costPerMWh.toFixed(2)+'/MWh' : '—', sub:'Full year — 12 months of WEM DE data', cls:'green'  },
+  { label:'Latest Composite Price',      value: latestComp ? '$'+latestComp.composite.toFixed(2)+'/MWh' : '—',
+    sub: latestComp ? latestComp.month+' — energy $'+latestComp.price_mean.toFixed(2)+' + cap $'+latestComp.capCost.toFixed(2) : '', cls:'teal' },
+];
+
+const cardsEl = document.getElementById('cards');
+cardsData.forEach(c => {
+  cardsEl.innerHTML += `<div class="card ${c.cls}"><div class="label">${c.label}</div><div class="value">${c.value}</div><div class="sub">${c.sub}</div></div>`;
+});
+
+// ── Chart helpers ─────────────────────────────────────────────────────────────
+const allLabels = COMPOSITE.map(r => r.month);
+const reformIdx = allLabels.indexOf(REFORM_MONTH);
+
+const MON_ABBR = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const commonXOpts = {
+  grid: { display: false },
+  ticks: {
+    maxRotation: 45, autoSkip: false, font: { size: 9 },
+    callback(val, idx) {
+      const lbl = allLabels[idx];
+      if (!lbl) return '';
+      const [y, m] = lbl.split('-').map(Number);
+      if (m % 3 !== 1) return '';           // show Jan, Apr, Jul, Oct only
+      return m === 1 ? `${MON_ABBR[m]} '${String(y).slice(2)}` : MON_ABBR[m];
+    }
+  }
+};
+
+// ── 1. Price History Chart ───────────────────────────────────────────────────
+new Chart(document.getElementById('priceHistoryChart'), {
+  type: 'line',
+  plugins: [eraLinePlugin],
+  data: {
+    labels: allLabels,
+    datasets: [{
+      label: 'Monthly Mean Market Price ($/MWh)',
+      data: COMPOSITE.map(r => r.price_mean),
+      borderColor: COMPOSITE.map((r, i, arr) => {
+        // For segment colouring, use borderColor as array on line chart
+        return r.market === 'balancing' ? C.blue : C.teal;
+      }),
+      backgroundColor: 'transparent',
+      fill: false,
+      tension: 0.3,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      borderWidth: 2,
+      segment: {
+        borderColor: ctx => COMPOSITE[ctx.p0DataIndex]?.market === 'balancing' ? C.blue : C.teal,
+      },
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: c => ` Price: $${c.raw.toFixed(2)}/MWh (${COMPOSITE[c.dataIndex]?.market})` } }
+    },
+    scales: {
+      x: { ...commonXOpts },
+      y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => '$' + v, font: { size: 11 } }, title: { display: true, text: '$/MWh', font: { size: 11 } } }
+    }
+  }
+});
+
+// ── 2. Composite Price Stacked-Area Chart ────────────────────────────────────
+new Chart(document.getElementById('compositePriceChart'), {
+  type: 'line',
+  plugins: [eraLinePlugin],
+  data: {
+    labels: allLabels,
+    datasets: [
+      {
+        label: 'Energy Component — Market Price ($/MWh)',
+        data: COMPOSITE.map(r => r.price_mean),
+        fill: 'origin',
+        backgroundColor: C.blueFill,
+        borderColor: C.blue,
+        borderWidth: 1.5,
+        tension: 0.3,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+      },
+      {
+        label: 'Composite — Energy + Capacity ($/MWh)',
+        data: COMPOSITE.map(r => r.composite),
+        fill: '-1',
+        backgroundColor: C.amberFill,
+        borderColor: C.amber,
+        borderWidth: 2,
+        tension: 0.3,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+      },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            if (ctx.raw == null) return null;
+            return ` ${ctx.dataset.label.split(' — ')[0]}: $${ctx.raw.toFixed(2)}/MWh`;
+          },
+          footer: items => {
+            const energy = items.find(i => i.datasetIndex === 0);
+            const comp   = items.find(i => i.datasetIndex === 1);
+            if (energy && comp && comp.raw != null && energy.raw != null) {
+              const capPart = comp.raw - energy.raw;
+              return `Capacity component: $${capPart.toFixed(2)}/MWh`;
+            }
+            return '';
+          }
+        }
+      }
+    },
+    scales: {
+      x: { ...commonXOpts },
+      y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => '$' + v, font: { size: 11 } }, title: { display: true, text: '$/MWh', font: { size: 11 } } }
+    }
+  }
+});
+
+// ── 3. Price Comparison Line Chart ───────────────────────────────────────────
+new Chart(document.getElementById('priceComparisonChart'), {
+  type: 'line',
+  plugins: [eraLinePlugin],
+  data: {
+    labels: allLabels,
+    datasets: [
+      {
+        label: 'Market Price ($/MWh)',
+        data: COMPOSITE.map(r => r.price_mean),
+        borderColor: C.blue, backgroundColor: C.blueFill, fill: true,
+        tension: 0.3, pointRadius: 0, pointHoverRadius: 4, borderWidth: 2,
+      },
+      {
+        label: 'Composite Price — Energy + Capacity ($/MWh)',
+        data: COMPOSITE.map(r => r.composite),
+        borderColor: C.amber, backgroundColor: 'transparent', fill: false,
+        tension: 0.3, pointRadius: 0, pointHoverRadius: 4, borderWidth: 2.5,
+      },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12 } } },
+      tooltip: { callbacks: { label: c => c.raw == null ? null : ` ${c.dataset.label.split(' — ')[0]}: $${c.raw.toFixed(2)}/MWh` } }
+    },
+    scales: {
+      x: { ...commonXOpts },
+      y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => '$' + v, font: { size: 11 } } }
+    }
+  }
+});
+
+// ── 4. RCP History Chart ─────────────────────────────────────────────────────
+const histData   = CAPACITY.filter(d => d.peak_price != null && d.credits != null && d.year <= 2026);
+const histLabels = histData.map(d => fmtCapYear(d.year));
+
+new Chart(document.getElementById('rcpHistoryChart'), {
+  type: 'bar',
+  data: {
+    labels: histLabels,
+    datasets: [
+      { label:'Capacity Credits (MW)', data: histData.map(d => d.credits),
+        backgroundColor: histData.map(d => d.prelim ? 'rgba(37,99,235,.3)' : C.blueA),
+        borderColor:     histData.map(d => d.prelim ? 'rgba(37,99,235,.55)' : C.blue),
+        borderWidth:1.5, borderRadius:3, yAxisID:'yCredits', order:2 },
+      { label:'Peak RCP ($/MW/year)', type:'line', data: histData.map(d => d.peak_price),
+        borderColor:C.amber, backgroundColor:'transparent', fill:false, tension:0.3,
+        pointRadius:4, borderWidth:2.5, yAxisID:'yPrice', order:1 },
+      { label:'Transitional Price ($/MW/year)', type:'line', data: histData.map(d => d.trans_price),
+        borderColor:C.purple, backgroundColor:'transparent', fill:false, tension:0.3,
+        pointRadius:4, borderWidth:2, borderDash:[5,3], yAxisID:'yPrice', order:1 },
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins: { legend:{ position:'top', labels:{ usePointStyle:true, padding:20, font:{size:12} } },
+      tooltip:{ callbacks:{ label: ctx => {
+        if (ctx.datasetIndex===0) return ` Credits: ${fmt(ctx.raw,0)} MW`;
+        if (ctx.raw==null) return null;
+        return ` ${ctx.dataset.label.replace(' ($/MW/year)','')}: $${fmt(ctx.raw,0)}/MW/yr`;
+      }}}},
+    scales: {
+      x: { grid:{display:false}, ticks:{maxRotation:45, font:{size:11}} },
+      yCredits: { type:'linear', position:'left', min:3500,
+        title:{display:true,text:'Capacity Credits (MW)',font:{size:11},color:C.blue},
+        grid:{color:'#f0f0f0'}, ticks:{font:{size:11}, callback:v=>fmt(v,0)} },
+      yPrice: { type:'linear', position:'right',
+        title:{display:true,text:'Price ($/MW/year)',font:{size:11},color:C.amber},
+        grid:{display:false}, ticks:{font:{size:11}, callback:v=>'$'+fmt(v/1000,0)+'k'} }
+    }
+  }
+});
+
+// ── 5. Total Cost Chart ───────────────────────────────────────────────────────
+new Chart(document.getElementById('totalCostChart'), {
+  type:'bar',
+  data:{ labels:histLabels, datasets:[{
+    label:'Total Annual Cost ($M)',
+    data: histData.map(d => d.peak_price * d.credits / 1e6),
+    backgroundColor: histData.map(d => d.prelim ? 'rgba(13,148,136,.35)' : C.tealA),
+    borderColor:     histData.map(d => d.prelim ? 'rgba(13,148,136,.6)' : C.teal),
+    borderWidth:1.5, borderRadius:3,
+  }]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>` Cost: $${fmt(c.raw,1)}M`}} },
+    scales:{ x:{grid:{display:false}, ticks:{maxRotation:60,font:{size:10}}},
+      y:{grid:{color:'#f0f0f0'}, ticks:{font:{size:10}, callback:v=>'$'+fmt(v,0)+'M'},
+        title:{display:true,text:'$M / year',font:{size:10}}} }}
+});
+
+// ── 6. Cost per MWh Chart (extended) ─────────────────────────────────────────
+const mwhYears = Object.keys(capCostByYear).map(Number).sort();
+new Chart(document.getElementById('costPerMwhChart'), {
+  type:'bar',
+  data:{ labels: mwhYears.map(fmtCapYear), datasets:[{
+    label:'Capacity Cost / MWh',
+    data: mwhYears.map(y => capCostByYear[y].costPerMWh),
+    backgroundColor: mwhYears.map(y => capCostByYear[y].isEstimated ? 'rgba(217,119,6,.35)' : C.amberA),
+    borderColor:     mwhYears.map(y => capCostByYear[y].isEstimated ? 'rgba(217,119,6,.6)'  : C.amber),
+    borderWidth:1.5, borderRadius:3,
+  }]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{callbacks:{label:(c)=>{
+      const yr = mwhYears[c.dataIndex];
+      return ` $${c.raw.toFixed(2)}/MWh${capCostByYear[yr].isEstimated?' (est.)':''}`;
+    }}}},
+    scales:{ x:{grid:{display:false}, ticks:{maxRotation:60,font:{size:10}}},
+      y:{grid:{color:'#f0f0f0'}, title:{display:true,text:'$/MWh',font:{size:11}},
+        ticks:{font:{size:11}, callback:v=>'$'+v}} }}
+});
+
+// ── Annual Capacity Data Table ────────────────────────────────────────────────
+const tbody = document.getElementById('capTableBody');
+CAPACITY.filter(d => d.peak_price != null).forEach(d => {
+  const costData  = capCostByYear[d.year];
+  const totalCost = d.credits != null ? d.peak_price * d.credits : null;
+  const prelim    = d.prelim ? ' <span class="pill pill-prelim">prelim</span>' : '';
+  const est       = costData && costData.isEstimated ? ' <span class="pill pill-est">est.</span>' : '';
+  tbody.innerHTML += `<tr>
+    <td>${fmtCapYear(d.year)}${prelim}</td>
+    <td>${d.credits != null ? fmt(d.credits,1) : '<span class="muted">—</span>'}</td>
+    <td>$${fmt(d.peak_price,0)}</td>
+    <td>${d.trans_price  ? '$'+fmt(d.trans_price,0)  : '<span class="muted">—</span>'}</td>
+    <td>${d.flex_price   ? '$'+fmt(d.flex_price,0)   : '<span class="muted">—</span>'}</td>
+    <td>${totalCost ? fmtM(totalCost) : '<span class="muted">—</span>'}</td>
+    <td>${costData ? fmt(costData.annualisedMWh/1e6,3)+' TWh'+est : '<span class="muted">—</span>'}</td>
+    <td>${costData ? '$'+costData.costPerMWh.toFixed(2)+'/MWh' : '<span class="muted">—</span>'}</td>
+  </tr>`;
+});
+</script>
+</body>
+</html>

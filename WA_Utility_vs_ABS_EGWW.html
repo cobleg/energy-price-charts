@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WA Utility Capex vs ABS EGWW Aggregates</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Dataset",
+  "name": "WA Utility Capex vs ABS EGWW Aggregates",
+  "description": "Interactive visualisation comparing bottom-up project-level capital investment by six Western Australian state-owned utilities (electricity and water sectors) against top-down ABS national aggregates for the EGWW ANZSIC division. Allows drill-down into individual utility projects by clicking chart bar segments. Covers FY2021–FY2027, with actuals through FY2024 and forward forecasts thereafter. The WA utilities are all public corporations and therefore appear in ABS 5204.0 (which covers both public and private) but are excluded from ABS 5625.0 (which covers private capital expenditure only).",
+  "keywords": ["WA utilities", "capital expenditure", "Synergy", "Western Power", "Horizon Power", "Water Corporation", "Bunbury Water", "Busselton Water", "EGWW", "ABS 5204.0", "ABS 5625.0", "infrastructure investment", "Western Australia"],
+  "temporalCoverage": "2020/2027",
+  "spatialCoverage": {
+    "@type": "AdministrativeArea",
+    "name": "Western Australia",
+    "containedInPlace": {"@type": "Country", "name": "Australia"}
+  },
+  "variableMeasured": [
+    {
+      "@type": "PropertyValue",
+      "name": "WA utility total capital expenditure",
+      "description": "Bottom-up project-level annual asset investment program totals for six WA state-owned utilities, financial year ending 30 June"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "ABS EGWW national GFCF",
+      "description": "Gross Fixed Capital Formation for the EGWW industry, Australia-wide, chain volume measures (ABS 5204.0 Table 64)"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "ABS EGWW private capex",
+      "description": "Private-sector capital expenditure for the EGWW industry, trend chain volume measures (ABS 5625.0 Table 8). Excludes public corporations."
+    }
+  ],
+  "isBasedOn": [
+    {
+      "@type": "Dataset",
+      "name": "WA State-Owned Utility Asset Investment Programs",
+      "description": "Project-level capital expenditure data for six WA state-owned utilities: Synergy, Western Power, Horizon Power, Water Corporation, Bunbury Water Corporation, and Busselton Water. Headline figures are Total Asset Investment Program or equivalent parent rows per utility per financial year.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Western Australian state-owned utilities"
+      }
+    },
+    {
+      "@type": "Dataset",
+      "name": "ABS 5204.0 Table 64 — Gross Fixed Capital Formation by Industry, EGWW sector",
+      "description": "GFCF by Type of Asset, Electricity, Gas, Water and Waste Services industry, Australia-wide, chain volume measures. Annual, FY ending 30 June. Covers both public corporations and private businesses. Available to FY2025.",
+      "measurementTechnique": "National accounts, chain volume measures, annual",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Australian Bureau of Statistics",
+        "url": "https://www.abs.gov.au"
+      }
+    },
+    {
+      "@type": "Dataset",
+      "name": "ABS 5625.0 Table 8 — Private New Capital Expenditure, EGWW sector (Trend, Chain Volume Measures)",
+      "description": "Quarterly trend series for the EGWW division. Excludes public-sector business units — the six WA utilities are not included in this aggregate. Available to December 2025 (FY2026 incomplete).",
+      "measurementTechnique": "Capital expenditure survey, trend series, chain volume measures, quarterly",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Australian Bureau of Statistics",
+        "url": "https://www.abs.gov.au"
+      }
+    }
+  ],
+  "about": [
+    {"@type": "Thing", "name": "Electricity, Gas, Water and Waste Services sector"},
+    {"@type": "Thing", "name": "Capital expenditure"},
+    {"@type": "Thing", "name": "State-owned enterprises"},
+    {"@type": "Thing", "name": "Infrastructure investment"},
+    {"@type": "Thing", "name": "Western Australian electricity network"},
+    {"@type": "Thing", "name": "Western Australian water utilities"}
+  ]
+}
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #f7f8fa; color: #1a1f2e; margin: 0; padding: 24px; line-height: 1.5;
+  }
+  .container { max-width: 1340px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px 0; font-weight: 600; letter-spacing: -0.01em; }
+  h2 { font-size: 14px; margin: 24px 0 10px 0; font-weight: 600;
+       text-transform: uppercase; letter-spacing: 0.04em; color: #5b6478; }
+  .subtitle { color: #5b6478; font-size: 13px; margin: 0 0 18px 0; }
+
+  /* Summary tiles */
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+  .tile {
+    background: white; border: 1px solid #e3e6ec; border-radius: 10px;
+    padding: 14px 18px;
+  }
+  .tile .label { font-size: 11px; color: #5b6478; text-transform: uppercase;
+    letter-spacing: 0.04em; font-weight: 600; }
+  .tile .value { font-size: 22px; font-weight: 600; color: #1a1f2e; margin-top: 4px; }
+  .tile .sub { font-size: 11px; color: #8a93a5; margin-top: 4px; }
+  .tile.accent .value { color: #1f3a93; }
+  .tile.warn .value { color: #c25a1f; }
+
+  /* Controls */
+  .controls {
+    background: white; border: 1px solid #e3e6ec; border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 16px;
+    display: grid; grid-template-columns: auto auto auto 1fr; gap: 22px; align-items: start;
+  }
+  .control-group { display: flex; flex-direction: column; gap: 6px; }
+  .control-group h3 {
+    margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: #5b6478; font-weight: 600;
+  }
+  .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
+  .btn {
+    background: white; border: 1px solid #d4d8e0; border-radius: 6px;
+    padding: 6px 12px; font-size: 12.5px; cursor: pointer; color: #1a1f2e;
+    font-family: inherit; transition: all 0.12s ease;
+  }
+  .btn:hover { border-color: #8a93a5; background: #f0f2f6; }
+  .btn.active { background: #1f3a93; border-color: #1f3a93; color: white; }
+  .overlay-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; cursor: pointer; user-select: none; margin-top: 4px;
+  }
+  .overlay-toggle input { margin: 0; }
+
+  /* Chart wrapper */
+  .chart-wrap {
+    background: white; border: 1px solid #e3e6ec; border-radius: 10px;
+    padding: 16px 20px 20px 20px; height: 480px; position: relative;
+  }
+  .chart-wrap.small { height: 320px; }
+
+  /* Drill-down panel */
+  .drilldown {
+    background: white; border: 1px solid #e3e6ec; border-radius: 10px;
+    padding: 16px 20px; margin-top: 16px;
+  }
+  .drilldown-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .drilldown-title { font-size: 14px; font-weight: 600; }
+  .drilldown-meta { font-size: 11.5px; color: #5b6478; }
+  .drilldown-empty { color: #8a93a5; font-style: italic; font-size: 12.5px;
+    padding: 10px 0; }
+  .project-list { display: flex; flex-direction: column; gap: 6px; }
+  .project {
+    border: 1px solid #e3e6ec; border-radius: 6px; padding: 10px 14px;
+    display: grid; grid-template-columns: 1fr auto; gap: 6px 14px;
+  }
+  .project.parent { background: #eef3ff; border-color: #b8c8ed; }
+  .project-name { font-weight: 600; font-size: 12.5px; }
+  .project-amount { font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-weight: 600; font-size: 12.5px; color: #1f3a93; text-align: right;
+    white-space: nowrap; }
+  .project-amount.na { color: #8a93a5; font-style: italic; }
+  .project-notes { grid-column: 1 / -1; font-size: 11.5px; color: #5b6478; }
+  .project-raw { grid-column: 2; font-size: 10.5px; color: #8a93a5; text-align: right; }
+
+  /* Two-column layout for asset breakdown */
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 1000px) {
+    .row { grid-template-columns: 1fr; }
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .controls { grid-template-columns: 1fr; }
+    .chart-wrap { height: 380px; }
+  }
+
+  /* Meta */
+  .meta {
+    margin-top: 14px; font-size: 11.5px; color: #5b6478; background: white;
+    border: 1px solid #e3e6ec; border-radius: 10px; padding: 12px 16px;
+  }
+  .meta strong { color: #1a1f2e; }
+  .meta-row { margin-bottom: 5px; }
+  .meta-row:last-child { margin-bottom: 0; }
+  .pill {
+    display: inline-block; padding: 1px 7px; border-radius: 9px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    margin-left: 4px; color: white;
+  }
+  .pill.elec { background: #1f3a93; }
+  .pill.water { background: #17becf; }
+  .error {
+    color: #a02828; background: #ffe9e9; border: 1px solid #f4b8b8;
+    border-radius: 6px; padding: 12px 16px; margin: 12px 0; font-size: 13px; display: none;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>WA utility capex vs ABS EGWW aggregates</h1>
+  <p class="subtitle">Bottom-up project-level investment by WA state-owned utilities (six entities, two sectors) against the top-down ABS aggregates for the EGWW ANZSIC division. FY ending 30 June. Click any bar segment to see the underlying projects.</p>
+
+  <div id="err" class="error"></div>
+
+  <!-- Summary tiles -->
+  <div class="tiles">
+    <div class="tile accent">
+      <div class="label">WA utility capex (bottom-up)</div>
+      <div class="value" id="tile-wa">—</div>
+      <div class="sub">cumulative FY2021&ndash;FY2025, all 6 state utilities</div>
+    </div>
+    <div class="tile">
+      <div class="label">ABS 5204.0 EGWW (national)</div>
+      <div class="value" id="tile-5204">—</div>
+      <div class="sub">cumulative FY2021&ndash;FY2025, chain volume measures</div>
+    </div>
+    <div class="tile warn">
+      <div class="label">WA share of national EGWW</div>
+      <div class="value" id="tile-share">—</div>
+      <div class="sub">WA bottom-up &divide; ABS 5204.0 EGWW total</div>
+    </div>
+    <div class="tile">
+      <div class="label">ABS 5625.0 EGWW (private only)</div>
+      <div class="value" id="tile-5625">—</div>
+      <div class="sub">cumulative FY2021&ndash;FY2025, chain vol; <em>excludes public corporations like Synergy, Western Power, Horizon Power, Water Corp</em></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="control-group">
+      <h3>Sector filter</h3>
+      <div class="btn-group" id="sector-group">
+        <button class="btn active" data-sector="all">All sectors</button>
+        <button class="btn" data-sector="Electricity">Electricity only</button>
+        <button class="btn" data-sector="Water">Water only</button>
+      </div>
+    </div>
+    <div class="control-group">
+      <h3>ABS overlays</h3>
+      <label class="overlay-toggle"><input type="checkbox" id="show-5204" checked> ABS 5204.0 GFCF EGWW national (line)</label>
+      <label class="overlay-toggle"><input type="checkbox" id="show-5625"> ABS 5625.0 private EGWW capex (line)</label>
+    </div>
+    <div class="control-group">
+      <h3>Axis</h3>
+      <div class="btn-group" id="axis-group">
+        <button class="btn active" data-axis="dual">Dual axis (WA bars + ABS line)</button>
+        <button class="btn" data-axis="single">Single axis</button>
+      </div>
+    </div>
+    <div class="control-group">
+      <h3>Bar value</h3>
+      <div class="btn-group" id="value-group">
+        <button class="btn active" data-value="dollars">$m</button>
+        <button class="btn" data-value="share">% of WA total per year</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main chart -->
+  <h2>WA utility headline capex by FY, with ABS overlays</h2>
+  <div class="chart-wrap"><canvas id="chart-main"></canvas></div>
+
+  <!-- Drill-down -->
+  <div class="drilldown">
+    <div class="drilldown-header">
+      <div class="drilldown-title" id="drill-title">Project drill-down</div>
+      <div class="drilldown-meta" id="drill-meta">Click a bar segment above to see the underlying projects.</div>
+    </div>
+    <div id="drill-content" class="drilldown-empty">No segment selected yet.</div>
+  </div>
+
+  <!-- Asset breakdown panel -->
+  <h2>ABS 5204.0 EGWW national GFCF — asset-type composition</h2>
+  <div class="chart-wrap small"><canvas id="chart-asset"></canvas></div>
+
+  <div class="meta">
+    <div class="meta-row"><strong>WA utility data:</strong> Bottom-up project-level annual asset investment programs for the six WA state-owned utilities. Headline figures are the "Total Asset Investment Program" or equivalent parent row per utility per FY; child projects are surfaced in the drill-down panel.</div>
+    <div class="meta-row"><strong>ABS 5204.0 EGWW:</strong> Table 64 — Gross Fixed Capital Formation by Industry by Type of Asset, Electricity, Gas, Water and Waste Services industry, Australia-wide, chain volume measures. Annual, FY ending 30 Jun. Includes public corporations and private businesses; this is the right benchmark for state-owned WA utilities.</div>
+    <div class="meta-row"><strong>ABS 5625.0 EGWW:</strong> Table 8 — Trend Chain Volume Measures, EGWW sheet, quarterly summed to FY. <em>Excludes public-sector business units</em>, which is why this aggregate is much smaller than 5204.0 — Synergy, Western Power, Horizon Power, Water Corporation, Bunbury Water and Busselton Water are all public corporations and so are <em>excluded</em> from 5625.0 but <em>included</em> in 5204.0.</div>
+    <div class="meta-row"><em>Caveat: WA utility data covers FY2021&ndash;FY2027 with actuals through FY2024 and forward forecasts thereafter; ABS 5204.0 data is available to FY2025; ABS 5625.0 quarterly is available to Dec 2025 (incomplete FY2026). Cumulative comparison is FY2021&ndash;FY2025 to keep the windows aligned.</em></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function showErr(msg){
+    var el = document.getElementById('err'); el.textContent = msg; el.style.display = 'block';
+  }
+  window.addEventListener('error', function(e){ showErr('Script error: ' + (e.message || e)); });
+  if (typeof Chart === 'undefined') { showErr('Chart.js failed to load.'); return; }
+
+  var DATA = {"years": [2021, 2022, 2023, 2024, 2025, 2026, 2027], "utilities": ["Bunbury Water Corporation", "Busselton Water Corporation", "Horizon Power", "Synergy", "Water Corporation", "Western Power"], "sectors": {"Bunbury Water Corporation": "Water", "Busselton Water Corporation": "Water", "Horizon Power": "Electricity", "Synergy": "Electricity", "Water Corporation": "Water", "Western Power": "Electricity"}, "headline": {"Bunbury Water Corporation": {"2021": {"headline_m": 15.8, "headline_raw": "$15.8 million", "headline_notes": "Total AIP budget.", "children": [{"project": "Bunbury Water Resource Recovery Scheme", "amount_m": 11.9, "amount_raw": "$11.9 million", "notes": "WA Recovery Plan initiative to provide recycled water."}], "children_sum_m": 11.9}, "2022": {"headline_m": 18.5, "headline_raw": "$18.5 million", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}, "2023": {"headline_m": null, "headline_raw": null, "headline_notes": null, "children": [], "children_sum_m": 0.0}, "2024": {"headline_m": 13.5, "headline_raw": "$13.5 million", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}, "2025": {"headline_m": 18.7, "headline_raw": "$18.7 million", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}, "2026": {"headline_m": 23.3, "headline_raw": "$23.3 million", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}, "2027": {"headline_m": 37.0, "headline_raw": "$37.0 million", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}}, "Busselton Water Corporation": {"2021": {"headline_m": 2.9, "headline_raw": "$2.9 million", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}, "2022": {"headline_m": 3.8, "headline_raw": "$3.8 million", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}, "2023": {"headline_m": null, "headline_raw": null, "headline_notes": null, "children": [], "children_sum_m": 0.0}, "2024": {"headline_m": 8.6, "headline_raw": "$8.6 million", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}, "2025": {"headline_m": 9.8, "headline_raw": "$9.8 million", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}, "2026": {"headline_m": 10.0, "headline_raw": "$10.0 million", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}, "2027": {"headline_m": 6.6, "headline_raw": "$6.6 million", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}}, "Horizon Power": {"2021": {"headline_m": 183.2, "headline_raw": "$183.2 million", "headline_notes": "", "children": [{"project": "Asset Management Plan", "amount_m": 70.8, "amount_raw": "$70.8 million", "notes": "Mitigates extreme and high risks associated with energy assets."}, {"project": "Energy Storage in Regional Towns", "amount_m": 30.8, "amount_raw": "$30.8 million", "notes": "Battery energy storage systems across nine regional towns."}, {"project": "Standalone Power Systems (SPS)", "amount_m": 9.9, "amount_raw": "$9.9 million", "notes": "WA Recovery Plan spending across the Kimberley, Mid West, and Goldfields-Esperance."}, {"project": "Derby Renewable Solutions", "amount_m": 4.8, "amount_raw": "$4.8 million", "notes": "Renewable energy solutions for the Shire of Derby."}, {"project": "Denham Hydrogen Project", "amount_m": 4.7, "amount_raw": "$4.7 million", "notes": "Demonstration plant to test hydrogen displacement of diesel."}, {"project": "Broome Customer Experience Centre", "amount_m": 1.2, "amount_raw": "$1.2 million", "notes": "Relocation of customer call centre from Melbourne to Broome."}, {"project": "Mid West Pipeline", "amount_m": 1.0, "amount_raw": "$1 million", "notes": "Connection to a new LNG production plant in Mount Magnet."}, {"project": "Hardship Response Infrastructure Upgrades", "amount_m": 0.74, "amount_raw": "$740,000", "notes": "Prepayment metering platform and Horizon Power App enhancements."}, {"project": "Ngaanyatjarra Lands", "amount_m": 0.725, "amount_raw": "$725,000", "notes": "Feasibility studies for regularising electricity to 13 Aboriginal communities."}], "children_sum_m": 124.66}, "2022": {"headline_m": 151.9, "headline_raw": "$151.9 million", "headline_notes": "", "children": [{"project": "Asset Management Plan", "amount_m": 44.9, "amount_raw": "$44.9 million", "notes": "Includes $19.9M for asset replacement and $6.3M for safety."}, {"project": "Denham Hydrogen Demonstration Plant", "amount_m": null, "amount_raw": "N/A", "notes": "Commencing in 2021-22; part of a $9.3 million total project cost."}, {"project": "Energy Storage in Regional Towns", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from a broader $30.8 million allocation across 2020-21 to 2022-23."}, {"project": "Kununurra Cotton Gin Electricity Infrastructure", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from the broader Asset Investment Program."}, {"project": "Mid West Pipeline", "amount_m": 0.3, "amount_raw": "$300,000", "notes": "Unincorporated joint venture to supply gold mining customers."}], "children_sum_m": 45.2}, "2023": {"headline_m": 100.1, "headline_raw": "$100.1 million", "headline_notes": "", "children": [{"project": "Asset Management Plan", "amount_m": 38.4, "amount_raw": "$38.4 million", "notes": "Includes $19.4M for asset replacement and $5.9M for knowledge/technology."}, {"project": "Denham Hydrogen Demonstration Plant", "amount_m": null, "amount_raw": "N/A", "notes": "Completing in 2022-23; part of a $9.3 million total project cost."}, {"project": "Standalone Power Systems (SPS)", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from a broader $13.5 million allocation across 2020-21 to 2022-23."}, {"project": "Energy Storage in Regional Towns", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from a broader $30.8 million allocation across 2020-21 to 2022-23."}, {"project": "Derby Port", "amount_m": null, "amount_raw": "N/A", "notes": "High voltage distribution rebuild funded from the broader AIP."}], "children_sum_m": 38.4}, "2024": {"headline_m": 105.5, "headline_raw": "$105.5 million", "headline_notes": "", "children": [{"project": "Asset Management Plan", "amount_m": 44.1, "amount_raw": "$44.1 million", "notes": "Risk mitigation and regulatory compliance."}, {"project": "Remote Communities Transfer", "amount_m": 53.8, "amount_raw": "$53.8 million", "notes": "Total investment value to improve services for 141 remote Aboriginal communities."}, {"project": "Standalone Power Systems (SPS) Roll-out", "amount_m": 13.3, "amount_raw": "$13.3 million", "notes": "Installation of 50 SPS units in the Esperance Region."}, {"project": "Customer-funded Temporary Solar Connection", "amount_m": 7.6, "amount_raw": "$7.6 million", "notes": "33kV network solution for the Burrup Peninsula."}, {"project": "Property - New Builds", "amount_m": 3.8, "amount_raw": "$3.8 million", "notes": "Construction of six new residential houses for regional staff."}, {"project": "Electric Vehicle (EV) Charging Infrastructure", "amount_m": 2.4, "amount_raw": "$2.4 million", "notes": "Equity contribution for EV network stretching to Kununurra and Esperance."}, {"project": "Outage and Life Support Management System", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from a broader $8.8 million allocation across 2023-24 and 2024-25."}, {"project": "Energy Storage in Regional Towns", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from a broader $30.8 million allocation."}], "children_sum_m": 125.0}, "2025": {"headline_m": 189.1, "headline_raw": "$189.1 million", "headline_notes": "", "children": [{"project": "Asset Management Plan", "amount_m": 51.4, "amount_raw": "$51.4 million", "notes": "Includes $12.5M for Safety, $12.4M for Reliability, and $10.2M for Asset Replacement."}, {"project": "Kimberley Communities Solar Saver", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from a $10.6 million allocation across 2023-24 and 2024-25."}, {"project": "Outage and Life Support Management System", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from an $8.8 million allocation across 2023-24 and 2024-25."}, {"project": "Dampier Resilience Project", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from a $3.8 million allocation across 2023-24 and 2024-25."}, {"project": "Property - New Builds", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from a $3.8 million allocation across 2023-24 and 2024-25."}, {"project": "Remote Communities Transfer", "amount_m": null, "amount_raw": "N/A", "notes": "Part of a $60.8 million investment over the forward estimates."}, {"project": "Transmission Infrastructure", "amount_m": null, "amount_raw": "N/A", "notes": "Part of a $147.6 million investment over the forward estimates."}], "children_sum_m": 51.4}, "2026": {"headline_m": 112.2, "headline_raw": "$112.2 million", "headline_notes": "", "children": [{"project": "Asset Management Plan", "amount_m": 52.6, "amount_raw": "$52.6 million", "notes": "Extreme and high-risk mitigation for energy assets."}, {"project": "Blackstone Hybrid Energy Solution", "amount_m": null, "amount_raw": "N/A", "notes": "Construction commencing August 2025 to replace temporary diesel generation."}, {"project": "Community Batteries", "amount_m": null, "amount_raw": "N/A", "notes": "Procurement of 10 community batteries across Exmouth, Carnarvon, and Esperance."}, {"project": "Advanced Metering Infrastructure Pilot", "amount_m": null, "amount_raw": "N/A", "notes": "Rollout for five remote communities in the Kimberley and Pilbara."}, {"project": "Remote Generation Asset Upgrades", "amount_m": null, "amount_raw": "N/A", "notes": "Chile Creek asset upgrades to deliver resilient hybrid generation."}, {"project": "Regulated Network Transformer", "amount_m": null, "amount_raw": "N/A", "notes": "Murdoch zone substation replacement funded from 2024-25 allocations."}], "children_sum_m": 52.6}, "2027": {"headline_m": 141.3, "headline_raw": "$141.3 million", "headline_notes": "", "children": [{"project": "Advanced Metering Infrastructure", "amount_m": 11.0, "amount_raw": "$11 million", "notes": "Part of a broader $23 million initiative for remote communities."}, {"project": "Asset Management Plan", "amount_m": null, "amount_raw": "N/A", "notes": "Expected ~$50.1M sub-total; part of a $929 million 4-year investment."}, {"project": "Remote Communities Initiatives", "amount_m": null, "amount_raw": "N/A", "notes": "Part of a broader $189 million 4-year investment."}, {"project": "Customer-Funded Works", "amount_m": null, "amount_raw": "N/A", "notes": "Part of a $205 million investment over four years."}], "children_sum_m": 11.0}}, "Synergy": {"2021": {"headline_m": 57.7, "headline_raw": "$57.7 million", "headline_notes": "", "children": [{"project": "Generation Asset Maintenance", "amount_m": 27.8, "amount_raw": "$27.8 million", "notes": "Includes $800,000 for compliance works at the retired Kwinana Power Station."}, {"project": "Retail Systems & Metering", "amount_m": 12.7, "amount_raw": "$12.7 million", "notes": "Includes $4 million for Advanced Metering Infrastructure and $8.7 million for legacy retail systems."}, {"project": "Wholesale Electricity Market (WEM) Reforms", "amount_m": 7.9, "amount_raw": "$7.9 million", "notes": "Readiness for WEM reforms implemented by October 2022."}, {"project": "Corporate ICT Infrastructure", "amount_m": 4.3, "amount_raw": "$4.3 million", "notes": "Replacement and upgrade of HR and finance systems."}, {"project": "Community Energy Exchange (VPP for Schools)", "amount_m": 3.5, "amount_raw": "$3.5 million", "notes": "WA Recovery Plan pilot project for virtual power plants."}, {"project": "Renewable Energy for Social Housing", "amount_m": 0.7, "amount_raw": "$700,000", "notes": "WA Recovery Plan initiative for vulnerable customers."}], "children_sum_m": 56.9}, "2022": {"headline_m": 194.6, "headline_raw": "$194.6 million", "headline_notes": "", "children": [{"project": "Big Battery", "amount_m": 114.0, "amount_raw": "$114 million", "notes": "100 MW big battery for renewable integration and system security."}, {"project": "Generation Asset Maintenance", "amount_m": 41.0, "amount_raw": "$41 million", "notes": "Maintenance of coal, gas, liquid fuel, and renewable assets."}, {"project": "Customer Engagement Platform", "amount_m": 12.0, "amount_raw": "$12 million", "notes": "Replacement of legacy customer systems."}, {"project": "Corporate ICT Infrastructure", "amount_m": 11.0, "amount_raw": "$11 million", "notes": "Finance and HR system replacements and device upgrades."}, {"project": "Thermal Generation Fleet Upgrades", "amount_m": 8.0, "amount_raw": "$8 million", "notes": "Enables more frequent start-ups and operation at lower voltages."}, {"project": "Electric Vehicle (EV) Charging Stations", "amount_m": 4.5, "amount_raw": "$4.5 million", "notes": "Installation across the South West Interconnected System."}, {"project": "Wholesale Electricity Market (WEM) Reforms", "amount_m": 2.0, "amount_raw": "$2 million", "notes": "Infrastructure upgrades for market readiness."}, {"project": "Smart Energy for Social Housing", "amount_m": 1.5, "amount_raw": "$1.5 million", "notes": "Installation of solar panels for vulnerable customers."}, {"project": "Virtual Power Plants (VPP) for Schools", "amount_m": 0.52, "amount_raw": "$520,000", "notes": "Continuation of pilot project."}], "children_sum_m": 194.52}, "2023": {"headline_m": 143.4, "headline_raw": "$143.4 million", "headline_notes": "", "children": [{"project": "Big Battery (Kwinana Power Station)", "amount_m": 51.0, "amount_raw": "$51 million", "notes": "Finalising the 100 MW/200 MWh utility-scale battery."}, {"project": "Generation Asset Maintenance", "amount_m": 49.1, "amount_raw": "$49.1 million", "notes": "Includes $6 million for flexible operations at the Muja Power Station."}, {"project": "Customer Engagement Platform", "amount_m": 13.0, "amount_raw": "$13 million", "notes": "Implementation of a new retail platform."}, {"project": "Corporate ICT Infrastructure", "amount_m": 10.0, "amount_raw": "$10 million", "notes": "System and device upgrades."}, {"project": "Electric Vehicle (EV) Charging Highway", "amount_m": 4.5, "amount_raw": "$4.5 million", "notes": "Fast-charging network spanning Perth, Kununurra, Eucla, and Kalgoorlie."}, {"project": "Virtual Power Plants (VPP) for Schools", "amount_m": 4.3, "amount_raw": "$4.3 million", "notes": "Battery storage and solar for seven additional regional schools."}, {"project": "Wholesale Electricity Market (WEM) Reforms", "amount_m": 2.0, "amount_raw": "$2 million", "notes": "Upgrades for market readiness."}, {"project": "Smart Energy for Social Housing", "amount_m": 1.6, "amount_raw": "$1.6 million", "notes": "COVID-19 Response initiative."}, {"project": "Emergency Solar Management", "amount_m": 0.47, "amount_raw": "$470,000", "notes": "ICT platform to remotely turn off solar systems during emergencies."}], "children_sum_m": 135.97}, "2024": {"headline_m": 57.3, "headline_raw": "$57.3 million", "headline_notes": "", "children": [{"project": "Generation Asset Maintenance", "amount_m": 46.7, "amount_raw": "$46.7 million", "notes": "Capacity and reliability maintenance of existing thermal and renewable assets."}, {"project": "Decarbonisation and Renewable Projects", "amount_m": null, "amount_raw": "N/A", "notes": "Funded via equity contributions from a broader $2.7 billion provision."}, {"project": "Virtual Power Plants (VPP)", "amount_m": null, "amount_raw": "N/A", "notes": "Second stage rollout for schools; not explicitly itemised for the single year."}], "children_sum_m": 46.7}, "2025": {"headline_m": 1228.0, "headline_raw": "$1.228 billion", "headline_notes": "", "children": [{"project": "Kwinana Battery Energy Storage System 2", "amount_m": 583.3, "amount_raw": "$583.3 million", "notes": "200 MW/800 MWh utility-scale transmission-connected battery."}, {"project": "Collie Battery Energy Storage System 1", "amount_m": 549.7, "amount_raw": "$549.7 million", "notes": "500 MW/2,000 MWh battery energy storage system."}, {"project": "Business Systems Replacement", "amount_m": 72.5, "amount_raw": "$72.5 million", "notes": "Corporate IT infrastructure replacement."}, {"project": "Generation Asset Maintenance", "amount_m": 63.0, "amount_raw": "$63 million", "notes": "Maintenance of thermal and renewable fleet capacity."}, {"project": "Property, Plant and Equipment", "amount_m": 9.8, "amount_raw": "$9.8 million", "notes": "Ongoing corporate works."}, {"project": "Decarbonisation - Other Minor Investment", "amount_m": 1.5, "amount_raw": "$1.5 million", "notes": "Minor program investments."}], "children_sum_m": 1279.8}, "2026": {"headline_m": 568.4, "headline_raw": "$568.4 million", "headline_notes": "", "children": [{"project": "Thermal Generation Maintenance", "amount_m": 69.8, "amount_raw": "$69.8 million", "notes": "Includes funding for Cockburn Power Station and Kwinana Gas Turbines."}, {"project": "Renewable Assets", "amount_m": null, "amount_raw": "N/A", "notes": "Part of a $199.9 million (Collie Battery) and $424 million (King Rocks) forward estimate provision."}], "children_sum_m": 69.8}, "2027": {"headline_m": 199.4, "headline_raw": "$199.4 million", "headline_notes": "", "children": [{"project": "Generation and Storage Assets", "amount_m": 63.6, "amount_raw": "$63.6 million", "notes": "Maintenance of coal, gas, liquid fuel, renewable, and battery assets."}, {"project": "Security of Critical Infrastructure Remediation", "amount_m": 1.65, "amount_raw": "$1.65 million", "notes": "Identified as \"New Works\" under corporate expenditures."}, {"project": "King Rocks Wind Farm", "amount_m": null, "amount_raw": "N/A", "notes": "Funded via a $132.2 million investment over the forward estimates period."}], "children_sum_m": 65.25}}, "Water Corporation": {"2021": {"headline_m": 708.5, "headline_raw": "$708.5 million", "headline_notes": "Total committed to asset investment projects across the State.", "children": [{"project": "Metropolitan Water Network and Supply", "amount_m": 158.7, "amount_raw": "$158.7 million", "notes": "Includes $10 million for the Groundwater Replenishment Scheme."}, {"project": "Essential and Municipal Services Upgrade", "amount_m": 12.0, "amount_raw": "$12.0 million", "notes": "Upgrades for Aboriginal communities (Mowanjum, Bayulu, and Bidyadanga)."}, {"project": "METRONET Pipe Relocation", "amount_m": 3.0, "amount_raw": "$3.0 million", "notes": "Relocation at Albany Highway, Kelvin, and Olga Roads intersection."}, {"project": "York Wastewater Treatment Plant", "amount_m": 2.1, "amount_raw": "$2.1 million", "notes": "Upgrades to treatment and disposal capacity."}, {"project": "Coral Bay Wastewater Treatment Plant", "amount_m": 0.2, "amount_raw": "$200,000", "notes": "Construction of lined evaporation and infiltration ponds."}], "children_sum_m": 176.0}, "2022": {"headline_m": 699.2, "headline_raw": "$699.2 million", "headline_notes": "Total AIP budget.", "children": [{"project": "Metropolitan Water Network and Supply", "amount_m": 133.3, "amount_raw": "$133.3 million", "notes": "Ongoing supply of drinking water and facility development."}, {"project": "Wastewater Projects", "amount_m": 85.3, "amount_raw": "$85.3 million", "notes": "Includes Broome North ($19.2 million) and Collie/Kemerton WTPs ($7.4 million)."}, {"project": "COVID-19 Response", "amount_m": 9.9, "amount_raw": "$9.9 million", "notes": "Regional water and wastewater infrastructure upgrades."}, {"project": "Essential and Municipal Services Upgrade", "amount_m": 6.5, "amount_raw": "$6.5 million", "notes": "Delivered to Aboriginal communities for improved services."}, {"project": "Moora Kolburn Water Treatment Plant", "amount_m": 3.7, "amount_raw": "$3.7 million", "notes": "Upgrade plant performance and capacity."}, {"project": "Gross Pollution Traps", "amount_m": 2.5, "amount_raw": "$2.5 million", "notes": "Election commitment to reduce plastic pollution into waterways."}, {"project": "Morley Galleria Drainage Basin", "amount_m": 0.1, "amount_raw": "$100,000", "notes": "Improve appearance and perimeter fencing."}], "children_sum_m": 241.3}, "2023": {"headline_m": 648.3, "headline_raw": "$648.3 million", "headline_notes": "Total AIP budget.", "children": [{"project": "Metropolitan Wastewater Treatment Projects", "amount_m": 195.3, "amount_raw": "$195.3 million", "notes": "Includes Woodman Point plant upgrade ($44.7 million)."}, {"project": "Metropolitan Water Network and Supply", "amount_m": 140.9, "amount_raw": "$140.9 million", "notes": "Includes Talbot Road pipe renewal ($8.0 million)."}, {"project": "Regional Water Projects", "amount_m": 98.8, "amount_raw": "$98.8 million", "notes": "Includes Merredin pipe ($5.2 million) and Moora Kolburn WTP ($4.5 million)."}, {"project": "Regional Wastewater Projects", "amount_m": 37.9, "amount_raw": "$37.9 million", "notes": "Enhancing capacity and compliance."}, {"project": "COVID-19 Response", "amount_m": 10.5, "amount_raw": "$10.5 million", "notes": "Infrastructure upgrades to drive economic and social recovery."}], "children_sum_m": 483.4}, "2024": {"headline_m": 1110.0, "headline_raw": "$1.11 billion", "headline_notes": "Total AIP budget.", "children": [{"project": "Metropolitan Wastewater Treatment Projects", "amount_m": 202.4, "amount_raw": "$202.4 million", "notes": "Includes Woodman Point Water Resource Recovery Facility ($57.0 million)."}, {"project": "Regional Water Projects", "amount_m": 202.3, "amount_raw": "$202.3 million", "notes": "Includes Onslow WTP ($30.2 million) and South Hedland storage tank ($9.9 million)."}, {"project": "Relocation and Augmentation of Network Assets", "amount_m": 85.0, "amount_raw": "$85.0 million", "notes": "Relocation of water network assets."}, {"project": "Regional Wastewater Projects", "amount_m": 52.8, "amount_raw": "$52.8 million", "notes": "Includes Broome North Water Resource Recovery Facility ($7.2 million)."}, {"project": "Remote Aboriginal Communities Accelerated Works", "amount_m": 19.0, "amount_raw": "$19.0 million", "notes": "Delivered under the COVID-19 response."}, {"project": "Wanneroo South Groundwater Scheme Stage One", "amount_m": 7.4, "amount_raw": "$7.4 million", "notes": "Drilling and equipping of production bores."}], "children_sum_m": 568.9}, "2025": {"headline_m": 1700.0, "headline_raw": "$1.70 billion", "headline_notes": "Total AIP budget.", "children": [{"project": "Metropolitan Wastewater Treatment and Network", "amount_m": 297.1, "amount_raw": "$297.1 million", "notes": "Upgrades across northern and southern corridors."}, {"project": "Relocation and Augmentation of Network Assets", "amount_m": 156.8, "amount_raw": "$156.8 million", "notes": "Broad relocation of water assets."}, {"project": "Regional Water Projects", "amount_m": 153.9, "amount_raw": "$153.9 million", "notes": "Includes Onslow WTP ($44.7 million) and Burrup Seawater Supply ($42.7 million)."}, {"project": "Flat Rocks Wind Farm Stage 2", "amount_m": 94.4, "amount_raw": "$94.4 million", "notes": "Renewable energy powering desalination plants."}, {"project": "Regional Wastewater Projects", "amount_m": 49.3, "amount_raw": "$49.3 million", "notes": "Includes Ulster Road Albany pressure main ($14.3 million) and sewer relining ($6.0 million)."}, {"project": "Metropolitan Critical Water Reticulation Renewals", "amount_m": 30.4, "amount_raw": "$30.4 million", "notes": "Reduces asset failure risks across the metropolitan area."}, {"project": "Remote Aboriginal Communities Accelerated Works", "amount_m": 28.6, "amount_raw": "$28.6 million", "notes": "Improved water services to remote communities."}, {"project": "Regional Irrigation Projects", "amount_m": 25.4, "amount_raw": "$25.4 million", "notes": "Includes the Ord Irrigation Scheme ($22.6 million)."}, {"project": "Election Commitments", "amount_m": 20.0, "amount_raw": "$20.0 million", "notes": "Includes Essential and Municipal Services ($14.9 million) and Albert St Drain ($5.0 million)."}, {"project": "Talbot Road Pipe Renewal", "amount_m": 9.3, "amount_raw": "$9.3 million", "notes": "Securing supply in Hazelmere and Helena Valley."}], "children_sum_m": 865.2}, "2026": {"headline_m": 2220.0, "headline_raw": "$2.22 billion", "headline_notes": "Total AIP budget.", "children": [{"project": "Regional Wastewater Projects", "amount_m": 110.0, "amount_raw": "$110.0 million", "notes": "Includes Northam WRRF ($26.5 million) and Waroona WRRF ($12.0 million)."}, {"project": "Regional Irrigation Projects", "amount_m": 36.2, "amount_raw": "$36.2 million", "notes": "Includes the Ord Irrigation Scheme upgrade ($35.0 million)."}], "children_sum_m": 146.2}, "2027": {"headline_m": 2680.0, "headline_raw": "$2.68 billion", "headline_notes": "Total AIP budget.", "children": [], "children_sum_m": 0.0}}, "Western Power": {"2021": {"headline_m": 892.2, "headline_raw": "$892.2 million", "headline_notes": "", "children": [{"project": "Service Capital Projects", "amount_m": 345.0, "amount_raw": "$345 million", "notes": "Essential investments for reliability, regulatory compliance, and business support."}, {"project": "Safety Programs", "amount_m": 242.0, "amount_raw": "$242 million", "notes": "Includes $202 million to replace high-risk overhead conductors and wooden poles."}, {"project": "State Underground Power Program", "amount_m": 56.4, "amount_raw": "$56.4 million", "notes": "Replacement of overhead network assets with underground power."}, {"project": "Security (System Management)", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from a broader $28.5 million allocation across 2020-21 and 2021-22."}, {"project": "Service Connection Condition Monitoring", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from a broader $34 million allocation across 2020-21 and 2021-22."}, {"project": "East Perth Power Station Redevelopment", "amount_m": null, "amount_raw": "N/A", "notes": "Funded from a broader $16.1 million allocation across 2020-21 to 2022-23."}], "children_sum_m": 643.4}, "2022": {"headline_m": 834.2, "headline_raw": "$834.2 million", "headline_notes": "", "children": [{"project": "Service Capital Projects", "amount_m": 328.9, "amount_raw": "$328.9 million", "notes": "System reliability, asset replacement, metering, and business support."}, {"project": "Safety Programs", "amount_m": 273.8, "amount_raw": "$273.8 million", "notes": "Includes replacing 441 high-risk conductors and 27,756 power poles."}, {"project": "Growth (Customer Driven Works)", "amount_m": 148.7, "amount_raw": "$148.7 million", "notes": "Connecting customers and supporting the State's economy."}, {"project": "Growth (Network Augmentation)", "amount_m": 48.1, "amount_raw": "$48.1 million", "notes": "Network capacity expansion, including Kemerton transformer and East Perth Power Station."}], "children_sum_m": 799.5}, "2023": {"headline_m": 1010.9999999999999, "headline_raw": "$1.011 billion", "headline_notes": "", "children": [{"project": "Service Capital Projects", "amount_m": 359.2, "amount_raw": "$359.2 million", "notes": "Includes $121.5 million for business support, cybersecurity, and ICT."}, {"project": "Safety Programs", "amount_m": 320.6, "amount_raw": "$320.6 million", "notes": "Includes $216.5M for pole/conductor replacement and $50.8M for undergrounding."}, {"project": "Growth (Customer Driven Works)", "amount_m": 178.5, "amount_raw": "$178.5 million", "notes": "Distribution and transmission infrastructure expansion."}, {"project": "Growth (Network Augmentation)", "amount_m": 37.8, "amount_raw": "$37.8 million", "notes": "Includes $4.8 million for the East Perth Power Station redevelopment."}, {"project": "Security (System Management)", "amount_m": 21.6, "amount_raw": "$21.6 million", "notes": "Addresses network constraints (thermal, voltage, and fault level management)."}], "children_sum_m": 917.7}, "2024": {"headline_m": 1106.0, "headline_raw": "$1.106 billion", "headline_notes": "", "children": [{"project": "Service Capital Projects", "amount_m": 410.4, "amount_raw": "$410.4 million", "notes": "Includes $154.3M for ICT/cybersecurity and $98.7M for asset replacements."}, {"project": "Safety Programs", "amount_m": 274.4, "amount_raw": "$274.4 million", "notes": "Includes $194.5 million to replace 14,697 wood power poles and high-risk conductors."}, {"project": "Growth (Customer Driven Works)", "amount_m": 141.5, "amount_raw": "$141.5 million", "notes": "Connecting customers and supporting the economy."}, {"project": "Decarbonisation Augmentations", "amount_m": 122.0, "amount_raw": "$122 million", "notes": "Supports the decarbonisation of the SWIS and new renewable connections."}, {"project": "Asset Relocation and Upgrades", "amount_m": 52.2, "amount_raw": "$52.2 million", "notes": "Relocation of metropolitan transmission and distribution assets."}, {"project": "Growth (Network Augmentation)", "amount_m": 42.7, "amount_raw": "$42.7 million", "notes": "Addresses future loading obligations and load growth."}], "children_sum_m": 1043.2}, "2025": {"headline_m": 1373.0, "headline_raw": "$1.373 billion", "headline_notes": "", "children": [{"project": "Service Capital Projects", "amount_m": 455.2, "amount_raw": "$455.2 million", "notes": "Includes $125.8M for ICT upgrades and $38.2M for corporate real estate/depots."}, {"project": "Safety Programs", "amount_m": 443.4, "amount_raw": "$443.4 million", "notes": "Includes $202.1M for Undergrounding Pilot and $194.3M for pole/conductor replacement."}, {"project": "Clean Energy Link North & Augmentation", "amount_m": 185.9, "amount_raw": "$185.9 million", "notes": "Supports SWIS decarbonisation initiatives."}, {"project": "Growth (Customer Driven Works)", "amount_m": 183.6, "amount_raw": "$183.6 million", "notes": "Customer connections and infrastructure."}, {"project": "Growth (Network Augmentation)", "amount_m": 74.2, "amount_raw": "$74.2 million", "notes": "Capacity expansion works."}, {"project": "Asset Relocation and Upgrades", "amount_m": 4.4, "amount_raw": "$4.4 million", "notes": "Asset relocation facilitating broader capital works."}, {"project": "Community Batteries", "amount_m": 3.3, "amount_raw": "$3.3 million", "notes": "Commonwealth Government's Community Batteries for Household Solar Program."}, {"project": "Security (Thermal Management)", "amount_m": 0.224, "amount_raw": "$224,000", "notes": "Addresses fault-rated equipment and voltage constraints."}], "children_sum_m": 1350.22}, "2026": {"headline_m": 1708.0, "headline_raw": "$1.708 billion", "headline_notes": "", "children": [{"project": "Clean Energy Link - North", "amount_m": 542.0, "amount_raw": "$542 million", "notes": "Upgrades to connect wind capacity in the Wheatbelt and Mid West."}, {"project": "Service Capital Projects", "amount_m": 447.8, "amount_raw": "$447.8 million", "notes": "Includes $127.6M for asset replacements and $19.6M for corporate real estate."}, {"project": "Safety Programs", "amount_m": 392.2, "amount_raw": "$392.2 million", "notes": "Includes $148.1M for the Underground Power Program across multiple suburbs."}, {"project": "Asset Relocation and Upgrades", "amount_m": 17.3, "amount_raw": "$17.3 million", "notes": "Relocation of transmission and distribution assets."}], "children_sum_m": 1399.3}, "2027": {"headline_m": 2320.0, "headline_raw": "$2.32 billion", "headline_notes": "", "children": [{"project": "Growth Capital Expenditure", "amount_m": 1100.0, "amount_raw": "$1.1 billion", "notes": "Network expansion supporting decarbonisation, electrification, and housing."}, {"project": "Sustaining Capital Expenditure", "amount_m": 1100.0, "amount_raw": "$1.1 billion", "notes": "Asset renewal to maintain safety and compliance; ICT, SCADA, and metering."}, {"project": "Structural Capital Expenditure", "amount_m": 110.0, "amount_raw": "$110 million", "notes": "Enables transformer upgrades, new substations, and CBD office accommodation."}, {"project": "Clean Energy Link (Kemerton SIA)", "amount_m": 55.0, "amount_raw": "$55 million", "notes": "Replacement higher capacity transformer and network reliability improvements."}], "children_sum_m": 2365.0}}}, "wa_total_by_fy": {"2021": 1860.3, "2022": 1902.2, "2023": 1902.7999999999997, "2024": 2400.9, "2025": 4518.6, "2026": 4641.9, "2027": 5384.3}, "abs": {"series_5204_gfcf": [39826, 38455, 43138, 50013, 54283, null, null], "series_5204_nondw": [26798, 26940, 31285, 36498, 39178, null, null], "series_5204_mach": [10927, 9002, 9453, 10911, 12313, null, null], "series_5204_rd": [374, 421, 457, 505, 492, null, null], "series_5204_sw": [1766, 2031, 1935, 2100, 2300, null, null], "series_5625_total": [9472, 10117, 11352, 12459, 14440, null, null], "series_5625_equip": [1526, 1444, 1639, 1767, 1841, null, null]}, "summary": {"wa_cum_2125": 12584.8, "abs_5204_cum_2125": 225715, "abs_5625_cum_2125": 57840, "wa_share_of_5204_pct": 5.57552665972576}};
+
+  // Colour palette for utilities — electricity in blues/purples, water in teals
+  var UTIL_COLORS = {
+    'Synergy':                       '#1f3a93',
+    'Western Power':                 '#3b5fc4',
+    'Horizon Power':                 '#7a96d3',
+    'Water Corporation':             '#17becf',
+    'Bunbury Water Corporation':     '#4ad1d8',
+    'Busselton Water Corporation':   '#85e0e4'
+  };
+  var UTIL_ORDER = ['Synergy', 'Western Power', 'Horizon Power', 'Water Corporation', 'Bunbury Water Corporation', 'Busselton Water Corporation'];
+
+  function formatM(v) {
+    if (v == null) return '—';
+    if (v >= 1000) return '$' + (v/1000).toFixed(1) + 'bn';
+    return '$' + Math.round(v).toLocaleString() + 'm';
+  }
+
+  // Populate summary tiles
+  document.getElementById('tile-wa').textContent = formatM(DATA.summary.wa_cum_2125);
+  document.getElementById('tile-5204').textContent = formatM(DATA.summary.abs_5204_cum_2125);
+  document.getElementById('tile-5625').textContent = formatM(DATA.summary.abs_5625_cum_2125);
+  document.getElementById('tile-share').textContent = DATA.summary.wa_share_of_5204_pct.toFixed(1) + '%';
+
+  // State
+  var state = {
+    sector: 'all',
+    show5204: true,
+    show5625: false,
+    axis: 'dual',
+    value: 'dollars'
+  };
+
+  var mainChart = null;
+  var assetChart = null;
+  var selected = null;  // {fy, utility}
+
+  function utilitiesInScope() {
+    return UTIL_ORDER.filter(function(u){
+      if (state.sector === 'all') return true;
+      return DATA.sectors[u] === state.sector;
+    });
+  }
+
+  function buildMainChart() {
+    if (mainChart) { mainChart.destroy(); mainChart = null; }
+    var utils = utilitiesInScope();
+    var ctx = document.getElementById('chart-main').getContext('2d');
+    var datasets = [];
+
+    // Per-year totals for % mode
+    var yearTotals = {};
+    DATA.years.forEach(function(y){
+      yearTotals[y] = 0;
+      utils.forEach(function(u){
+        var v = DATA.headline[u][String(y)].headline_m;
+        if (v != null) yearTotals[y] += v;
+      });
+    });
+
+    utils.forEach(function(u){
+      var vals = DATA.years.map(function(y){
+        var h = DATA.headline[u][String(y)].headline_m;
+        if (h == null) return null;
+        if (state.value === 'share') {
+          var t = yearTotals[y];
+          return t > 0 ? (h / t * 100) : null;
+        }
+        return h;
+      });
+      datasets.push({
+        type: 'bar',
+        label: u + (DATA.sectors[u] === 'Water' ? ' (water)' : ' (elec)'),
+        data: vals,
+        backgroundColor: UTIL_COLORS[u] || '#888',
+        borderColor: 'white', borderWidth: 1,
+        stack: 'wa', yAxisID: 'y',
+        category: 'utility', utility: u
+      });
+    });
+
+    // ABS overlay lines (only in $m mode)
+    if (state.value === 'dollars') {
+      if (state.show5204) {
+        datasets.push({
+          type: 'line',
+          label: 'ABS 5204.0 EGWW (national GFCF, chain vol)',
+          data: DATA.abs.series_5204_gfcf,
+          borderColor: '#c25a1f', backgroundColor: '#c25a1f',
+          borderWidth: 2.5, pointRadius: 4, pointHoverRadius: 6,
+          tension: 0.15, spanGaps: false,
+          yAxisID: state.axis === 'dual' ? 'y2' : 'y',
+          category: 'overlay'
+        });
+      }
+      if (state.show5625) {
+        datasets.push({
+          type: 'line',
+          label: 'ABS 5625.0 EGWW (private only, chain vol trend)',
+          data: DATA.abs.series_5625_total,
+          borderColor: '#8b0000', backgroundColor: '#8b0000',
+          borderWidth: 2, pointRadius: 3, pointHoverRadius: 5,
+          tension: 0.15, spanGaps: false, borderDash: [6, 4],
+          yAxisID: state.axis === 'dual' ? 'y2' : 'y',
+          category: 'overlay'
+        });
+      }
+    }
+
+    var yTitle = (state.value === 'dollars') ? 'WA utility capex ($m)' : 'Share of WA total (%)';
+    var y2Title = 'ABS national EGWW ($m, chain vol)';
+
+    mainChart = new Chart(ctx, {
+      data: { labels: DATA.years.map(function(y){return 'FY' + y;}), datasets: datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        onClick: function(evt, elements) {
+          if (!elements || elements.length === 0) return;
+          // Find a bar element (skip lines)
+          for (var i = 0; i < elements.length; i++) {
+            var el = elements[i];
+            var ds = mainChart.data.datasets[el.datasetIndex];
+            if (ds.category === 'utility') {
+              var fy = DATA.years[el.index];
+              renderDrillDown(fy, ds.utility);
+              return;
+            }
+          }
+        },
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11.5 }, boxWidth: 14, padding: 10 } },
+          tooltip: {
+            backgroundColor: 'rgba(20,25,40,0.95)',
+            callbacks: {
+              label: function(item) {
+                var v = item.parsed.y;
+                if (v == null) return item.dataset.label + ': n/a';
+                if (state.value === 'share' && item.dataset.category === 'utility') {
+                  return item.dataset.label + ': ' + v.toFixed(1) + '%';
+                }
+                return item.dataset.label + ': ' + formatM(v);
+              }
+            }
+          }
+        },
+        scales: {
+          x: { stacked: true, ticks: { font: { size: 11.5 } } },
+          y: {
+            stacked: true, beginAtZero: true,
+            title: { display: true, text: yTitle, color: '#5b6478', font: { size: 11.5 } },
+            ticks: { font: { size: 11 }, color: '#5b6478',
+              callback: function(v){ return state.value === 'share' ? v + '%' : formatM(v); } }
+          },
+          y2: state.axis === 'dual' ? {
+            position: 'right', beginAtZero: true, grid: { drawOnChartArea: false },
+            title: { display: true, text: y2Title, color: '#c25a1f', font: { size: 11.5 } },
+            ticks: { font: { size: 11 }, color: '#c25a1f',
+              callback: function(v){ return formatM(v); } }
+          } : undefined
+        }
+      }
+    });
+  }
+
+  function renderDrillDown(fy, utility) {
+    selected = {fy: fy, utility: utility};
+    var bucket = DATA.headline[utility][String(fy)];
+    document.getElementById('drill-title').textContent =
+      utility + ' — FY' + fy;
+    var sectorClass = DATA.sectors[utility] === 'Water' ? 'water' : 'elec';
+    var sectorLabel = DATA.sectors[utility];
+    var headlineHTML = '';
+    if (bucket.headline_m != null) {
+      headlineHTML = 'Headline: <strong>' + formatM(bucket.headline_m) + '</strong> · ';
+    }
+    document.getElementById('drill-meta').innerHTML =
+      headlineHTML + 'Children: ' + bucket.children.length + ' · Sum: ' + formatM(bucket.children_sum_m)
+      + ' <span class="pill ' + sectorClass + '">' + sectorLabel + '</span>';
+
+    var content = document.getElementById('drill-content');
+    content.className = '';
+    content.innerHTML = '';
+    var list = document.createElement('div');
+    list.className = 'project-list';
+
+    // Parent row first
+    if (bucket.headline_m != null || bucket.headline_raw) {
+      var parent = document.createElement('div');
+      parent.className = 'project parent';
+      parent.innerHTML =
+        '<div class="project-name">Total Asset Investment Program (headline)</div>' +
+        '<div class="project-amount">' + (bucket.headline_m != null ? formatM(bucket.headline_m) : 'n/a') +
+        '<div class="project-raw">' + (bucket.headline_raw || '') + '</div></div>' +
+        (bucket.headline_notes ? '<div class="project-notes">' + bucket.headline_notes + '</div>' : '');
+      list.appendChild(parent);
+    }
+
+    if (bucket.children.length === 0) {
+      var none = document.createElement('div');
+      none.className = 'drilldown-empty';
+      none.textContent = 'No itemised child projects published for this utility/year.';
+      list.appendChild(none);
+    } else {
+      bucket.children.forEach(function(p){
+        var div = document.createElement('div');
+        div.className = 'project';
+        var amt = (p.amount_m != null) ? formatM(p.amount_m) : 'n/a';
+        var amtClass = (p.amount_m != null) ? '' : 'na';
+        div.innerHTML =
+          '<div class="project-name">' + p.project + '</div>' +
+          '<div class="project-amount ' + amtClass + '">' + amt +
+          '<div class="project-raw">' + (p.amount_raw || '') + '</div></div>' +
+          (p.notes ? '<div class="project-notes">' + p.notes + '</div>' : '');
+        list.appendChild(div);
+      });
+    }
+    content.appendChild(list);
+  }
+
+  function buildAssetChart() {
+    if (assetChart) { assetChart.destroy(); assetChart = null; }
+    var ctx = document.getElementById('chart-asset').getContext('2d');
+    assetChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: DATA.years.map(function(y){return 'FY' + y;}),
+        datasets: [
+          { label: 'Non-dwelling construction', data: DATA.abs.series_5204_nondw,
+            backgroundColor: '#1f3a93', stack: 's' },
+          { label: 'Machinery and equipment', data: DATA.abs.series_5204_mach,
+            backgroundColor: '#3b5fc4', stack: 's' },
+          { label: 'IP products — Computer software', data: DATA.abs.series_5204_sw,
+            backgroundColor: '#7a96d3', stack: 's' },
+          { label: 'IP products — Research and development', data: DATA.abs.series_5204_rd,
+            backgroundColor: '#b8cdf0', stack: 's' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11.5 }, boxWidth: 14, padding: 10 } },
+          tooltip: {
+            backgroundColor: 'rgba(20,25,40,0.95)',
+            callbacks: {
+              label: function(item) {
+                var v = item.parsed.y;
+                return item.dataset.label + ': ' + (v == null ? 'n/a' : formatM(v));
+              },
+              footer: function(items) {
+                var t = 0;
+                items.forEach(function(i){ if (i.parsed.y != null) t += i.parsed.y; });
+                return 'EGWW GFCF total: ' + formatM(t);
+              }
+            }
+          }
+        },
+        scales: {
+          x: { stacked: true, ticks: { font: { size: 11.5 } } },
+          y: { stacked: true, beginAtZero: true,
+            title: { display: true, text: 'ABS national EGWW GFCF ($m, chain vol)', color: '#5b6478', font: { size: 11.5 } },
+            ticks: { font: { size: 11 }, color: '#5b6478',
+              callback: function(v){ return formatM(v); } }
+          }
+        }
+      }
+    });
+  }
+
+  // Wire up controls
+  document.getElementById('sector-group').addEventListener('click', function(e){
+    if (!e.target.dataset || !e.target.dataset.sector) return;
+    var btns = this.querySelectorAll('.btn');
+    for (var i=0; i<btns.length; i++) btns[i].classList.toggle('active', btns[i] === e.target);
+    state.sector = e.target.dataset.sector;
+    buildMainChart();
+  });
+  document.getElementById('axis-group').addEventListener('click', function(e){
+    if (!e.target.dataset || !e.target.dataset.axis) return;
+    var btns = this.querySelectorAll('.btn');
+    for (var i=0; i<btns.length; i++) btns[i].classList.toggle('active', btns[i] === e.target);
+    state.axis = e.target.dataset.axis;
+    buildMainChart();
+  });
+  document.getElementById('value-group').addEventListener('click', function(e){
+    if (!e.target.dataset || !e.target.dataset.value) return;
+    var btns = this.querySelectorAll('.btn');
+    for (var i=0; i<btns.length; i++) btns[i].classList.toggle('active', btns[i] === e.target);
+    state.value = e.target.dataset.value;
+    buildMainChart();
+  });
+  document.getElementById('show-5204').addEventListener('change', function(e){
+    state.show5204 = e.target.checked; buildMainChart();
+  });
+  document.getElementById('show-5625').addEventListener('change', function(e){
+    state.show5625 = e.target.checked; buildMainChart();
+  });
+
+  buildMainChart();
+  buildAssetChart();
+
+  // Pre-select the largest 2025 bar segment for an initial drill-down
+  renderDrillDown(2025, 'Water Corporation');
+})();
+</script>
+</body>
+</html>

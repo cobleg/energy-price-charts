@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Australian Energy Prices — Interactive Charts</title>
+  <meta name="description" content="A collection of interactive charts exploring Australian electricity and gas prices, WEM market data, international comparisons, and capital expenditure analysis." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --border: #dde3ed;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --accent: #0d6efd;
+      --accent-dark: #0a58ca;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.05);
+      --shadow-hover: 0 4px 12px rgba(0,0,0,.12), 0 8px 32px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0f2942 0%, #1a5276 60%, #0d6efd 100%);
+      color: #fff;
+      padding: 56px 48px 48px;
+    }
+    .header-inner { max-width: 960px; margin: 0 auto; }
+    header .eyebrow {
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      opacity: .65;
+      margin-bottom: 12px;
+    }
+    header h1 {
+      font-size: clamp(1.6rem, 4vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -.03em;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    header p {
+      font-size: 1rem;
+      opacity: .8;
+      max-width: 680px;
+      line-height: 1.7;
+    }
+    .header-tags {
+      margin-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tag {
+      display: inline-block;
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+    }
+
+    /* ── Main ── */
+    main { max-width: 960px; margin: 0 auto; padding: 48px 24px 80px; }
+
+    .section-label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      margin-top: 48px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-label:first-of-type { margin-top: 0; }
+
+    /* ── Grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease;
+      text-decoration: none;
+      color: inherit;
+      overflow: hidden;
+    }
+    .card:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-2px);
+      border-color: #b6c9e8;
+    }
+    .card-stripe {
+      height: 4px;
+      background: var(--stripe-color, var(--accent));
+    }
+    .card-body { padding: 22px 22px 18px; flex: 1; }
+    .card-icon {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+      line-height: 1;
+    }
+    .card h2 {
+      font-size: .95rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+    .card p {
+      font-size: .83rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+    .card-footer {
+      padding: 12px 22px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .card-meta {
+      font-size: .72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .card-link-label {
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .card-link-label svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      font-size: .78rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="eyebrow">Interactive Data</div>
+    <h1>Australian Energy Prices</h1>
+    <p>A collection of interactive charts exploring retail electricity and gas prices across Australia, wholesale market data for the WEM, international benchmarks, and utility capital expenditure analysis.</p>
+    <div class="header-tags">
+      <span class="tag">Electricity</span>
+      <span class="tag">Gas</span>
+      <span class="tag">CPI</span>
+      <span class="tag">WEM</span>
+      <span class="tag">NEM</span>
+      <span class="tag">1989 – 2026</span>
+      <span class="tag">ABS Data</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Section 1: CPI Price Charts -->
+  <div class="section-label">Retail Price Indices — ABS CPI Series</div>
+  <div class="grid">
+
+    <a class="card" href="Energy_Prices_Chart.html">
+      <div class="card-stripe" style="--stripe-color:#2563eb;"></div>
+      <div class="card-body">
+        <div class="card-icon">📈</div>
+        <h2>Electricity &amp; Gas CPI by Capital City</h2>
+        <p>Interactive time-series of ABS CPI values for electricity and gas across all eight Australian capital cities. Toggle between a quarterly legacy series (1989–2019) and a monthly current series (2021–2026), rebaselined for growth-rate comparison.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-meta">1989 – 2026 · 8 cities</span>
+        <span class="card-link-label">View chart <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="Energy_Prices_Chart_Annotated.html">
+      <div class="card-stripe" style="--stripe-color:#7c3aed;"></div>
+      <div class="card-body">
+        <div class="card-icon">🏷️</div>
+        <h2>Annotated — Government Subsidy Interventions</h2>
+        <p>The CPI series annotated with discrete government subsidy and bill-relief interventions, showing how policy decisions shifted the price trajectory in each state and territory.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-meta">Policy overlay</span>
+        <span class="card-link-label">View chart <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="Energy_Prices_Chart_Shocks.html">
+      <div class="card-stripe" style="--stripe-color:#dc2626;"></div>
+      <div class="card-body">
+        <div class="card-icon">⚡</div>
+        <h2>Annotated — Climate &amp; Geopolitical Shocks</h2>
+        <p>The CPI series annotated with major climate events and geopolitical shocks — drought, bushfires, the 2022 gas crisis — that affected Australian energy infrastructure and pricing.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-meta">External shocks overlay</span>
+        <span class="card-link-label">View chart <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="Energy_Prices_Chart_Unified.html">
+      <div class="card-stripe" style="--stripe-color:#059669;"></div>
+      <div class="card-body">
+        <div class="card-icon">🗂️</div>
+        <h2>Unified Annotated View</h2>
+        <p>Both annotation layers combined — government subsidy interventions and external climate and geopolitical shocks — on a single chart for a complete picture of price drivers.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-meta">Combined overlay</span>
+        <span class="card-link-label">View chart <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="Energy_Prices_Chart_NEM_WEM_CPI.html">
+      <div class="card-stripe" style="--stripe-color:#d97706;"></div>
+      <div class="card-body">
+        <div class="card-icon">⚖️</div>
+        <h2>NEM vs WEM with All-Groups CPI Overlay</h2>
+        <p>Compares the National Electricity Market (NEM) and Western Australia's Wholesale Electricity Market (WEM/SWIS) jurisdictions, with an All-Groups CPI overlay to contextualise energy price growth against broader inflation.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-meta">NEM · WEM · CPI</span>
+        <span class="card-link-label">View chart <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Section 2: WEM Wholesale Market -->
+  <div class="section-label">WEM Wholesale Market</div>
+  <div class="grid">
+
+    <a class="card" href="wem_composite_price_dashboard.html">
+      <div class="card-stripe" style="--stripe-color:#0d9488;"></div>
+      <div class="card-body">
+        <div class="card-icon">🔋</div>
+        <h2>WEM Reserve Capacity &amp; Composite Price Dashboard</h2>
+        <p>Combines the WEM Balancing Market (2012–2023) and Reference Trading Price (2023–2026) with the Reserve Capacity Price to form a 14-year composite electricity price series capturing both short-run and long-run marginal cost.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-meta">2012 – 2026 · Capacity + Energy</span>
+        <span class="card-link-label">View dashboard <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="sent_out_trading_prices_dashboard.html">
+      <div class="card-stripe" style="--stripe-color:#2563eb;"></div>
+      <div class="card-body">
+        <div class="card-icon">📊</div>
+        <h2>WEM Sent-Out Energy &amp; Trading Prices Dashboard</h2>
+        <p>Monthly aggregated statistics for total sent-out generation (MWh) and reference trading prices ($/MWh) in the WEM, covering October 2023 to April 2026 at 30-minute trading interval granularity.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-meta">Oct 2023 – Apr 2026</span>
+        <span class="card-link-label">View dashboard <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Section 3: Gas & International -->
+  <div class="section-label">Gas — International Benchmarks</div>
+  <div class="grid">
+
+    <a class="card" href="Gas_Price_International_Comparison.html">
+      <div class="card-stripe" style="--stripe-color:#7c3aed;"></div>
+      <div class="card-body">
+        <div class="card-icon">🌏</div>
+        <h2>Australian Gas Prices vs International Benchmarks</h2>
+        <p>Quarterly comparison of Australian retail gas CPI against international wholesale benchmarks — US Henry Hub, European NBP/TTF, Japan LNG CIF — indexed to Sep 1989 = 100. Includes analysis of WA's Domestic Gas Policy.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-meta">1989 – 2025 · 4 benchmarks</span>
+        <span class="card-link-label">View chart <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Section 4: Capital Expenditure -->
+  <div class="section-label">Capital Expenditure Analysis</div>
+  <div class="grid">
+
+    <a class="card" href="EGWW_Capex_vs_Electricity_Analysis.html">
+      <div class="card-stripe" style="--stripe-color:#dc2626;"></div>
+      <div class="card-body">
+        <div class="card-icon">🏗️</div>
+        <h2>EGWW Capex vs Electricity Prices</h2>
+        <p>Statistical analysis of the relationship between Electricity, Gas, Water and Waste Services (EGWW) sector capital expenditure and Australian electricity consumer prices — time-series charts, scatter plots, and correlation statistics.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-meta">Capex · Correlation · Scatter</span>
+        <span class="card-link-label">View analysis <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="WA_Utility_vs_ABS_EGWW.html">
+      <div class="card-stripe" style="--stripe-color:#d97706;"></div>
+      <div class="card-body">
+        <div class="card-icon">🔍</div>
+        <h2>WA Utility Capex vs ABS EGWW Aggregates</h2>
+        <p>Compares bottom-up project-level capital investment by six Western Australian state-owned utilities (electricity and water) against top-down ABS national EGWW aggregates, with drill-down into individual utility projects by year.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-meta">6 WA utilities · ABS EGWW</span>
+        <span class="card-link-label">View analysis <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </a>
+
+  </div>
+
+</main>
+
+<footer>
+  Data sources: ABS (6401.0), AEMO, WEM Market Operator, IEA · Charts built with Chart.js
+</footer>
+
+</body>
+</html>

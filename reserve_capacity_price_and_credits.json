@@ -1,0 +1,251 @@
+{
+  "metadata": {
+    "title": "Reserve Capacity Price and Capacity Credits",
+    "market": "Wholesale Electricity Market (WEM)",
+    "region": "Western Australia",
+    "mechanism": "WA Reserve Capacity Mechanism",
+    "units": {
+      "prices": "AUD per MW per year",
+      "capacity_credits": "MW"
+    },
+    "sources": {
+      "prices": {
+        "fields": ["peak_reserve_capacity_price", "flexible_reserve_capacity_price", "demand_side_management_reserve_capacity_price", "peak_transitional_price", "fixed_peak_reserve_capacity_price"],
+        "provider": "Australian Energy Market Operator (AEMO)",
+        "url": "https://www.aemo.com.au/energy-systems/electricity/wholesale-electricity-market-wem/wa-reserve-capacity-mechanism/reserve-capacity-price",
+        "accessed": "2025-10-10"
+      },
+      "capacity_credits": {
+        "fields": ["capacity_credits_mw"],
+        "provider": "Australian Energy Market Operator (AEMO)",
+        "description": "Annual summary of capacity credits assigned by facility, published per Reserve Capacity Cycle. Each cycle is a separate publication.",
+        "url": "https://www.aemo.com.au/-/media/files/electricity/wem/reserve_capacity_mechanism/assignment/2024/capacity-credits-since-market-start-up-to-2026-2027.xlsx",
+        "url_description": "Full history of capacity credits from market start to 2026-27",
+        "sample_url": "https://aemo.com.au/-/media/files/electricity/wem/reserve_capacity_mechanism/assignment/2024/summary-of-capacity-credits-assigned-by-facility-for-the-2023-reserve-capacity-cycle---republication.pdf?la=en",
+        "accessed": "2025-10-10"
+      }
+    },
+    "footnotes": {
+      "*": "2026-27 capacity credits figure is indicative or preliminary."
+    }
+  },
+  "columns": {
+    "capacity_year_start": "The year the capacity year begins (e.g. 2007 = capacity year 2007-08)",
+    "capacity_credits_mw": "Total capacity credits (MW)",
+    "peak_reserve_capacity_price": "Peak Reserve Capacity Price ($ per MW per year)",
+    "flexible_reserve_capacity_price": "Flexible Reserve Capacity Price ($ per MW per year)",
+    "demand_side_management_reserve_capacity_price": "Demand Side Management Reserve Capacity Price ($ per MW per year)",
+    "peak_transitional_price": "Peak Transitional Price ($ per MW per year)",
+    "fixed_peak_reserve_capacity_price": "Fixed Peak Reserve Capacity Price ($ per MW per year)"
+  },
+  "data": [
+    {
+      "capacity_year_start": 2005,
+      "capacity_credits_mw": 3531.1,
+      "peak_reserve_capacity_price": null,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2006,
+      "capacity_credits_mw": 3744.4,
+      "peak_reserve_capacity_price": null,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2007,
+      "capacity_credits_mw": 4113.393,
+      "peak_reserve_capacity_price": 127500.00,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2008,
+      "capacity_credits_mw": 4599.785,
+      "peak_reserve_capacity_price": 97834.89,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2009,
+      "capacity_credits_mw": 5136.43,
+      "peak_reserve_capacity_price": 108458.57,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2010,
+      "capacity_credits_mw": 5258.55,
+      "peak_reserve_capacity_price": 144235.38,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2011,
+      "capacity_credits_mw": 5493.486,
+      "peak_reserve_capacity_price": 131804.58,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2012,
+      "capacity_credits_mw": 5995.613,
+      "peak_reserve_capacity_price": 186001.04,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2013,
+      "capacity_credits_mw": 6086.829,
+      "peak_reserve_capacity_price": 178476.69,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2014,
+      "capacity_credits_mw": 6040.161,
+      "peak_reserve_capacity_price": 122427.87,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2015,
+      "capacity_credits_mw": 5683.315,
+      "peak_reserve_capacity_price": 120199.31,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2016,
+      "capacity_credits_mw": 5618.442,
+      "peak_reserve_capacity_price": 121888.94,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2017,
+      "capacity_credits_mw": 5193.925,
+      "peak_reserve_capacity_price": 111752.53,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": 17050.00,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2018,
+      "capacity_credits_mw": 4819.033,
+      "peak_reserve_capacity_price": 138760.39,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": 23631.25,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2019,
+      "capacity_credits_mw": 4887.97,
+      "peak_reserve_capacity_price": 126683.47,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": 16990.38,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2020,
+      "capacity_credits_mw": 4965.551,
+      "peak_reserve_capacity_price": 114134.15,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": 16730.00,
+      "peak_transitional_price": null,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2021,
+      "capacity_credits_mw": 4924.847,
+      "peak_reserve_capacity_price": 78573.33,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": 114000.00,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2022,
+      "capacity_credits_mw": 4807.237,
+      "peak_reserve_capacity_price": 85294.19,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": 115425.00,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2023,
+      "capacity_credits_mw": 4726.572,
+      "peak_reserve_capacity_price": 105949.27,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": 118599.19,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2024,
+      "capacity_credits_mw": 4596.425,
+      "peak_reserve_capacity_price": 194783.54,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": 150745.81,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2025,
+      "capacity_credits_mw": 4716.729,
+      "peak_reserve_capacity_price": 251420.00,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": 155418.93,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2026,
+      "capacity_credits_mw": 5952.655,
+      "notes": "Capacity credits marked as preliminary in source (*)",
+      "peak_reserve_capacity_price": 216091.78,
+      "flexible_reserve_capacity_price": null,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": 160392.34,
+      "fixed_peak_reserve_capacity_price": null
+    },
+    {
+      "capacity_year_start": 2027,
+      "capacity_credits_mw": null,
+      "peak_reserve_capacity_price": 360700.00,
+      "flexible_reserve_capacity_price": 180350.00,
+      "demand_side_management_reserve_capacity_price": null,
+      "peak_transitional_price": 177636.12,
+      "fixed_peak_reserve_capacity_price": 360700.00
+    }
+  ]
+}
