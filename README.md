@@ -28,6 +28,6 @@ A collection of self-contained interactive HTML charts exploring Australian elec
 1. Create a new repository on GitHub (public)
 2. Push this folder's contents to the `main` branch
 3. Go to **Settings → Pages → Source** and set branch to `main`, folder to `/ (root)`
-4. Your site will be live at `https://<your-username>.github.io/<repo-name>/`
+4. Your site will be live at [https://<your-username>.github.io/<repo-name>/](https://cobleg.github.io/energy-price-charts/)
 
 All charts are self-contained — Chart.js loads from CDN, no build step required.
